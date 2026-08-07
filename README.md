@@ -66,17 +66,21 @@ what you are doing. The easiest way in is the
 npx skills add SerroAI/serro-recipes --skill serro-context
 ```
 
-It prompts for which agents to install into, then **symlinks** — so
-`npx skills update` keeps the skill current. Useful flags:
+It prompts for which agents to install into, copies the skill into each one's
+skills directory, and records the install in a `skills-lock.json` at your repo
+root — which is what lets `npx skills update` re-fetch the latest later.
 
 | Flag | Effect |
 |---|---|
 | `-g` | install for yourself across every repo, not just this one |
-| `--copy` | an independent copy that will not change under you |
 | `-a claude-code -a codex` | target specific agents, skipping the prompt |
 | `-y` | non-interactive, for CI |
 
 Omit `--skill` to pick from all of them interactively.
+
+Verified against this repo: `npx skills add SerroAI/serro-recipes --skill
+serro-context -a claude-code -y` writes `.claude/skills/serro-context/SKILL.md`
+plus `skills-lock.json`, and `npx skills update` refreshes it.
 
 ### Or copy the file yourself
 
