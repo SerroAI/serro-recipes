@@ -1,1 +1,57 @@
-[]
+[
+  {
+    "slug": "serro-pr-readiness",
+    "name": "PR Readiness",
+    "author": "SerroAI",
+    "description": "Judge a PR against what the program already knows: open risks, committed customer requirements, recorded decisions and open action items. Not a style review — a \"does this land safely in this program\" review.",
+    "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-pr-readiness",
+    "sha": "1495d07dc1ad91db186df5c363d25e768572cc5f",
+    "tags": [
+      "review",
+      "development"
+    ],
+    "archonVersionCompat": ">=0.6.0",
+    "featured": true
+  },
+  {
+    "slug": "serro-release-readiness",
+    "name": "Release Readiness",
+    "author": "SerroAI",
+    "description": "Program-level go/no-go. Surfaces committed-but-unshipped customer requirements, unresolved risks, release-gating action items and contradicted decisions, with an explicit list of what could not be checked.",
+    "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-release-readiness",
+    "sha": "1495d07dc1ad91db186df5c363d25e768572cc5f",
+    "tags": [
+      "automation",
+      "planning"
+    ],
+    "archonVersionCompat": ">=0.6.0",
+    "featured": true
+  },
+  {
+    "slug": "serro-design-pr-review",
+    "name": "Design PR Review",
+    "author": "SerroAI",
+    "description": "Review a PR against the design source of truth — a design.md, a PRD, or a Serro-linked design doc — plus the program's recorded design decisions. Reports contradictions, decision reversals, silent extensions and stale design.",
+    "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-design-pr-review",
+    "sha": "1495d07dc1ad91db186df5c363d25e768572cc5f",
+    "tags": [
+      "review",
+      "development"
+    ],
+    "archonVersionCompat": ">=0.6.0",
+    "featured": true
+  },
+  {
+    "slug": "serro-context-pack",
+    "name": "Context Pack",
+    "author": "SerroAI",
+    "description": "Compile the program's live context into a committed SERRO-CONTEXT.md, so any agent — Claude Code, Codex, Cursor, Codepress — inherits it as ordinary repository context. Ships the serro-context skill alongside it.",
+    "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-context-pack",
+    "sha": "1495d07dc1ad91db186df5c363d25e768572cc5f",
+    "tags": [
+      "automation",
+      "planning"
+    ],
+    "archonVersionCompat": ">=0.6.0"
+  }
+]
