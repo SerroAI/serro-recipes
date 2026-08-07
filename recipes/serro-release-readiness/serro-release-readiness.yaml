@@ -1,0 +1,215 @@
+name: serro-release-readiness
+description: |
+  Use when: You are deciding whether a program is ready to ship — a release
+  cut, a milestone, a customer-facing launch.
+  Triggers: "release readiness", "are we ready to ship", "go/no-go",
+            "release check", "can we cut a release".
+  Does: Loads the program's open risks, committed-but-unshipped customer
+        requirements, open action items and recorded decisions -> gathers
+        delivery signals (merged PRs, commits since the last tag, recent
+        meetings) -> produces a go/no-go with an explicit blocker list.
+  NOT for: Reviewing a single PR (use serro-pr-readiness).
+
+  Requires the Serro MCP server. Read-only: writes only into the run's
+  artifacts directory, and posts nothing anywhere.
+
+tags: [automation, serro, planning, context]
+worktree:
+  enabled: false
+mutates_checkout: false
+
+nodes:
+  - id: serro-context
+    command: serro-context
+    description: Load the program's live state from Serro
+    denied_tools: [Edit, NotebookEdit]
+
+  - id: guard
+    bash: bash .archon/scripts/serro-context-guard.sh
+    depends_on: [serro-context]
+
+  # Deterministic release scope from git. No model required to read tags.
+  - id: release-scope
+    description: What has landed locally since the last release tag
+    depends_on: [guard]
+    timeout: 120
+    bash: |
+      set -uo pipefail
+      OUT="$ARTIFACTS_DIR/release-scope.txt"
+
+      LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+      BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+      BASE=${BASE:-main}
+
+      {
+        echo "last_tag=${LAST_TAG:-<none>}"
+        echo "default_branch=$BASE"
+        echo "head=$(git rev-parse --short HEAD)"
+        echo ""
+        if [ -n "$LAST_TAG" ]; then
+          echo "## Commits since $LAST_TAG"
+          git log --no-merges --pretty='- %h %s (%an, %ad)' --date=short "$LAST_TAG..HEAD" | head -300
+          echo ""
+          echo "## Files changed since $LAST_TAG"
+          git diff --stat "$LAST_TAG..HEAD" | tail -60
+        else
+          echo "## No tags in this repository — showing the last 100 commits"
+          git log --no-merges --pretty='- %h %s (%an, %ad)' --date=short -100
+        fi
+      } > "$OUT"
+
+      echo "last_tag=${LAST_TAG:-none}"
+      echo "commits=$(git log --no-merges --oneline ${LAST_TAG:+$LAST_TAG..HEAD} | wc -l | tr -d ' ')"
+
+  # Delivery signals that only Serro has: cross-tool activity for this program.
+  - id: delivery-signals
+    description: Pull cross-tool delivery signals for the program from Serro
+    depends_on: [guard]
+    denied_tools: [Edit, NotebookEdit]
+    prompt: |
+      Gather the delivery signals for the program identified in
+      `$ARTIFACTS_DIR/serro-context.json`. Use the `mcp__serro__*` tools only —
+      do not read the repository in this step.
+
+      Collect, where the tools are available:
+
+      - `mcp__serro__get_repo_activity` and/or `mcp__serro__search_github` —
+        recently merged PRs and open PRs associated with this program.
+      - `mcp__serro__get_program_activity` — what has actually been happening.
+      - `mcp__serro__search_meetings` — program meetings in the last 14 days,
+        with anything that sounds like a launch decision, a slip, or a
+        dependency on another team.
+      - `mcp__serro__search_reports` / `mcp__serro__get_report` — the most recent
+        program report, if one exists.
+
+      Write `$ARTIFACTS_DIR/delivery-signals.md` with one section per source.
+      Rules:
+
+      - Record what each tool returned, including when it returned nothing. An
+        empty result is a signal; a skipped lookup is a gap. Label them
+        differently.
+      - Keep identifiers: PR numbers, dates, owners, meeting titles. The next
+        step needs to cite them.
+      - Do not interpret yet. No verdicts here — collection only.
+
+      Finish with a short inventory: which sources returned data, which were
+      empty, which were unavailable.
+
+  - id: assess
+    description: Go/no-go against program context and delivery signals
+    depends_on: [release-scope, delivery-signals]
+    denied_tools: [Edit, NotebookEdit]
+    prompt: |
+      Decide whether this program is ready to ship. You have three inputs:
+
+      1. **Program context** — `$ARTIFACTS_DIR/serro-context.json`
+         Summary: $serro-context.output
+      2. **What has landed** — `$ARTIFACTS_DIR/release-scope.txt`
+         ($release-scope.output)
+      3. **Delivery signals** — `$ARTIFACTS_DIR/delivery-signals.md`
+
+      Read all three. You may read repository files to confirm whether something
+      claimed as done is actually present. Do not modify anything.
+
+      ## The four blocker classes
+
+      Judge each independently, and be specific about which items fall in it:
+
+      1. **Committed-but-unshipped requirements.** Any customer requirement in
+         `committed` status with no corresponding landed work is a blocker by
+         default. This is the highest-value check in the workflow: a commitment
+         to a named customer that nobody noticed was still open.
+      2. **Unresolved risks.** Open risks with high severity, or any open risk
+         whose subject appears in the landed scope. Note explicitly whether the
+         release makes each one better or worse.
+      3. **Open action items** that are release-gating — anything owned,
+         overdue, or phrased as a precondition.
+      4. **Contradicted decisions.** Landed work that goes against a recorded
+         program decision, or a decision made in a recent meeting that has not
+         been reflected in the code.
+
+      ## Rules of evidence
+
+      - Cite the item id or exact title for every blocker, plus the commit, PR
+        or file that supports the claim. Uncited blockers are opinions — drop
+        them.
+      - Distinguish "no evidence this shipped" from "evidence this did not
+        ship". Say which one you have.
+      - If a lookup was unavailable rather than empty, that becomes a listed
+        limitation in the verdict, not a silent omission.
+      - Do not pad the blocker list. Three real blockers beat eleven maybes.
+
+      ## Verdict
+
+      - `no_go` — at least one committed requirement is unshipped, or an open
+        high-severity risk is made worse by this release.
+      - `go_with_risk` — no hard blockers, but named risks or gaps ride along.
+      - `go` — nothing outstanding against a context substantive enough to
+        judge.
+    output_format:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum: [go, go_with_risk, no_go]
+        program_name:
+          type: string
+        blocker_count:
+          type: string
+        summary:
+          type: string
+        blockers_markdown:
+          type: string
+        limitations_markdown:
+          type: string
+      required:
+        - verdict
+        - program_name
+        - blocker_count
+        - summary
+        - blockers_markdown
+        - limitations_markdown
+
+  - id: report
+    depends_on: [assess]
+    denied_tools: [Edit, NotebookEdit]
+    allowed_tools: [Write, Read]
+    prompt: |
+      Write `$ARTIFACTS_DIR/release-readiness.md`. Nothing else — do not post to
+      GitHub, Slack or Serro.
+
+      ```
+      # Release Readiness — $assess.output.program_name
+
+      **Verdict:** <GO | GO WITH RISK | NO-GO>
+      **Scope:** <commits since last tag, from $ARTIFACTS_DIR/release-scope.txt>
+
+      ## Summary
+      $assess.output.summary
+
+      ## Blockers (<count>)
+      <one entry each: what it is, who owns it, the evidence, what unblocks it>
+
+      ## Riding along
+      <non-blocking risks and gaps that ship with this release>
+
+      ## What was checked
+      <the four blocker classes, each marked clear or flagged, so the reader
+      knows the scope of the check>
+
+      ## Limitations
+      <sources that were unavailable — a reader must know what was NOT checked>
+      ```
+
+      Verbatim inputs:
+
+      Verdict: $assess.output.verdict
+      Blockers: $assess.output.blocker_count
+
+      $assess.output.blockers_markdown
+
+      Limitations:
+      $assess.output.limitations_markdown
+
+      Do not soften the verdict and do not invent blockers. Finish by printing
+      the file path and the verdict.

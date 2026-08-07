@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "OPTIONAL — token-based Serro MCP wiring for CI or fully headless runs.",
+    "",
+    "The recommended path needs no file at all: register Serro once as a",
+    "user-scoped server and let the Claude Code runtime own OAuth refresh:",
+    "  claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp",
+    "  claude mcp login serro",
+    "",
+    "Use this file only when that is not possible (CI, containers, no browser).",
+    "To activate it:",
+    "  1. cp .archon/mcp/serro.json.example .archon/mcp/serro.json",
+    "  2. put SERRO_MCP_TOKEN=<token> in ~/.archon/.env  (NOT your repo .env —",
+    "     Archon strips repo .env keys at boot so app secrets stay out of runs)",
+    "  3. add  mcp: .archon/mcp/serro.json  to the workflow's serro-context node",
+    "",
+    "Archon expands $SERRO_MCP_TOKEN from its own process env. If the variable",
+    "is undefined it warns and sends an empty bearer, which fails as a 401 —",
+    "the context guard turns that into a clear run failure rather than a",
+    "context-free answer."
+  ],
+  "serro": {
+    "type": "http",
+    "url": "https://mcp.serro.ai/mcp",
+    "headers": {
+      "Authorization": "Bearer $SERRO_MCP_TOKEN"
+    }
+  }
+}

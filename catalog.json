@@ -1,0 +1,121 @@
+{
+  "$comment": [
+    "CANONICAL catalog for Serro Recipes. Every artifact, every kind.",
+    "",
+    "workflows.json is GENERATED from this file — run: bun scripts/build-registry.ts",
+    "It is the Archon-shaped projection (kind=archon-workflow) that `archon workflow",
+    "install` reads. Never hand-edit workflows.json; lint-registry.ts fails on drift.",
+    "",
+    "kind      — what the artifact IS. Determines where its files live and how it installs.",
+    "              archon-workflow -> recipes/<slug>/<slug>.yaml   (installed by the Archon CLI)",
+    "              agent-skill     -> skills/<slug>/SKILL.md        (copied into a runtime's skills dir)",
+    "targets   — which runtimes can actually run it. One artifact often reaches several;",
+    "              a skill in the agentskills.io layout is resolved by Archon, Codex and",
+    "              Copilot, while Claude Code reads .claude/skills/. ChatGPT has no skill",
+    "              install format at all, so it gets copy-paste or an MCP connector.",
+    "sha       — full 40-char commit pin. 40 zeros = not yet published; such entries are",
+    "              excluded from the generated registry because installing one would 404."
+  ],
+  "entries": [
+    {
+      "slug": "serro-pr-readiness",
+      "kind": "archon-workflow",
+      "name": "PR Readiness",
+      "author": "SerroAI",
+      "description": "Judge a PR against what the program already knows: open risks, committed customer requirements, recorded decisions and open action items. Not a style review — a \"does this land safely in this program\" review.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-pr-readiness",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["review", "development"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": true
+    },
+    {
+      "slug": "serro-release-readiness",
+      "kind": "archon-workflow",
+      "name": "Release Readiness",
+      "author": "SerroAI",
+      "description": "Program-level go/no-go. Surfaces committed-but-unshipped customer requirements, unresolved risks, release-gating action items and contradicted decisions, with an explicit list of what could not be checked.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-release-readiness",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["automation", "planning"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": true
+    },
+    {
+      "slug": "serro-design-pr-review",
+      "kind": "archon-workflow",
+      "name": "Design PR Review",
+      "author": "SerroAI",
+      "description": "Review a PR against the design source of truth — a design.md, a PRD, or a Serro-linked design doc — plus the program's recorded design decisions. Reports contradictions, decision reversals, silent extensions and stale design.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-design-pr-review",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["review", "development"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": true
+    },
+    {
+      "slug": "serro-context-pack",
+      "kind": "archon-workflow",
+      "name": "Context Pack",
+      "author": "SerroAI",
+      "description": "Compile the program's live context into a committed SERRO-CONTEXT.md, so any agent — Claude Code, Codex, Cursor, Codepress — inherits it as ordinary repository context. Ships the serro-context skill alongside it.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-context-pack",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["automation", "planning"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": false
+    },
+    {
+      "slug": "serro-context",
+      "kind": "agent-skill",
+      "name": "Program Context",
+      "author": "SerroAI",
+      "description": "Teaches an agent to load the program context that governs this repo — objective, open risks, committed customer requirements, recorded decisions — before planning or implementing, and how to behave when a request contradicts it.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-context",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["context", "development"],
+      "targets": ["claude-code", "codex", "copilot", "archon", "chatgpt"],
+      "featured": true
+    },
+    {
+      "slug": "serro-standup",
+      "kind": "agent-skill",
+      "name": "Standup Draft",
+      "author": "SerroAI",
+      "description": "Draft a status update from what actually happened — merged PRs, decisions, action items, meetings — with evidence attached to every claim. Shipped means merged, blocked names the decision needed.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-standup",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["planning", "reporting"],
+      "targets": ["claude-code", "codex", "copilot", "archon", "chatgpt"],
+      "featured": true
+    },
+    {
+      "slug": "serro-meeting-prep",
+      "kind": "agent-skill",
+      "name": "Meeting Prep",
+      "author": "SerroAI",
+      "description": "Prepare for a program meeting from the delta since the last one: what changed, which promises are still open, what needs a decision today, and questions specific enough to be uncomfortable.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-meeting-prep",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["planning", "meetings"],
+      "targets": ["claude-code", "codex", "copilot", "archon", "chatgpt"],
+      "featured": true
+    },
+    {
+      "slug": "serro-decision-check",
+      "kind": "agent-skill",
+      "name": "Decision Check",
+      "author": "SerroAI",
+      "description": "Before re-opening a settled question, find out whether it was already decided — and report the decision, its date, its rationale and what it constrains. Four explicit outcomes, including \"discussed but never decided\".",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-decision-check",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["context", "planning"],
+      "targets": ["claude-code", "codex", "copilot", "archon", "chatgpt"],
+      "featured": false
+    }
+  ]
+}

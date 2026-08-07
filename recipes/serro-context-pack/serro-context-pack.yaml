@@ -1,0 +1,143 @@
+name: serro-context-pack
+description: |
+  Use when: You want your coding agents to know what the program knows — without
+  wiring each of them to Serro.
+  Triggers: "context pack", "generate SERRO-CONTEXT.md", "give my agent program
+            context", "refresh program context".
+  Does: Loads the program's live context from Serro and compiles it into a single
+        committed `SERRO-CONTEXT.md` at the repo root, which any agent — Claude
+        Code, Codex, Cursor, Codepress — reads as ordinary repository context.
+  NOT for: Reviewing changes (use serro-pr-readiness or serro-design-pr-review).
+
+  Requires the Serro MCP server. This is the one workflow in this repo that
+  writes to your repository: exactly one file, `SERRO-CONTEXT.md`, at the root.
+  Nothing is committed or pushed — review the diff yourself.
+
+tags: [automation, serro, context, planning]
+worktree:
+  enabled: false
+mutates_checkout: true
+
+nodes:
+  - id: serro-context
+    command: serro-context
+    description: Load the program's live state from Serro
+    denied_tools: [Edit, NotebookEdit]
+
+  - id: guard
+    bash: bash .archon/scripts/serro-context-guard.sh
+    depends_on: [serro-context]
+
+  - id: pack
+    description: Compile the program context into SERRO-CONTEXT.md
+    depends_on: [guard]
+    denied_tools: [NotebookEdit]
+    prompt: |
+      Write `SERRO-CONTEXT.md` at the repository root. It is the only file you
+      may create or modify.
+
+      Source material — read both in full:
+      - `$ARTIFACTS_DIR/serro-context.json`
+      - `$ARTIFACTS_DIR/serro-context.md`
+
+      Summary: $serro-context.output
+
+      ## Who reads this file
+
+      A coding agent that has **no connection to Serro**, working on a task in
+      this repository, that will read this file as ordinary repo context. It
+      cannot ask follow-up questions and it cannot look anything up. Everything
+      it needs must be on the page, and everything on the page must be true.
+
+      That audience sets the rules:
+
+      - **Be specific and short.** Vague context is worse than none: it produces
+        confident, wrong work. Prefer 40 concrete lines to 300 hedged ones.
+      - **Every item keeps its identifier and status.** An agent must be able to
+        say "risk R-14 says X" rather than "there is some concern about X".
+      - **State the age of the data.** Program context goes stale. A reader must
+        know whether this reflects today or last quarter.
+      - **Never fabricate.** If Serro returned nothing for a section, write
+        "None recorded" — never an empty heading and never a plausible guess.
+      - **No secrets.** This file gets committed. If any context contains
+          credentials, customer PII, or an internal URL requiring auth, omit it
+          and note the omission.
+
+      ## Structure
+
+      ```markdown
+      # Program Context: <program name>
+
+      > Generated from Serro on <date>. Regenerate with:
+      > `archon workflow run serro-context-pack "<program name>"`
+      > Program id: <id> · Organization: <org>
+
+      ## Objective
+      <the program objective, verbatim where possible>
+
+      ## Current state
+      <where the program actually is right now, 3-5 lines>
+
+      ## Committed customer requirements
+      <table: id | requirement | customers | status. Committed and shipped only —
+      an agent does not need the request backlog, and including it invites work
+      nobody asked for.>
+
+      ## Open risks
+      <table: id | risk | severity | why it matters here>
+
+      ## Decisions already made
+      <table: id | date | decision | what it constrains. This is the section that
+      most changes agent behaviour — it is what stops an agent re-litigating a
+      settled choice.>
+
+      ## Open action items
+      <table: id | item | owner | status>
+
+      ## How to use this file
+      <4-6 imperative lines telling an agent what to do with the above: check
+      changes against open risks, do not contradict recorded decisions, treat
+      committed requirements as scope, and say so explicitly when a task
+      conflicts with something here.>
+
+      ## Not in this file
+      <what an agent should NOT assume it knows from this document, and where the
+      live source is>
+      ```
+
+      Omit any section Serro had no data for, except Open Risks and Decisions —
+      for those, write "None recorded" so a reader can tell absence from
+      omission.
+
+      If `SERRO-CONTEXT.md` already exists, overwrite it wholesale. Do not merge:
+      a half-updated context file is the one outcome worse than a stale one.
+
+      Finish with the file path and a line count.
+
+  - id: verify
+    description: Confirm the pack was written and is substantive
+    depends_on: [pack]
+    timeout: 60
+    bash: |
+      set -uo pipefail
+      FILE="SERRO-CONTEXT.md"
+
+      [ -f "$FILE" ] || { echo "SERRO-CONTEXT.md was not written." >&2; exit 1; }
+
+      LINES=$(wc -l < "$FILE" | tr -d ' ')
+      [ "$LINES" -ge 15 ] || { echo "SERRO-CONTEXT.md is only $LINES lines — the pack did not produce usable context." >&2; exit 1; }
+
+      MISSING=""
+      for H in "# Program Context" "## Objective" "## Open risks" "## Decisions already made"; do
+        grep -qF "$H" "$FILE" || MISSING="$MISSING '$H'"
+      done
+      [ -z "$MISSING" ] || { echo "SERRO-CONTEXT.md is missing required sections:$MISSING" >&2; exit 1; }
+
+      cp "$FILE" "$ARTIFACTS_DIR/SERRO-CONTEXT.md"
+
+      echo "wrote=$FILE lines=$LINES"
+      echo ""
+      echo "Review it before committing:  git diff -- $FILE"
+      echo "To give any Claude agent the same context, install the bundled skill:"
+      echo "  mkdir -p .claude/skills/serro-context"
+      echo "  cp .archon/skills/serro-context.md .claude/skills/serro-context/SKILL.md"

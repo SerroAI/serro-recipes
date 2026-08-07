@@ -1,0 +1,170 @@
+name: serro-pr-readiness
+description: |
+  Use when: You want to know whether a PR is safe to merge given everything the
+  program already knows — not whether the code is stylish.
+  Triggers: "pr readiness", "is this PR safe to merge", "readiness check",
+            "check PR against program".
+  Does: Loads the Serro program's open risks, committed customer requirements,
+        recorded decisions and open action items -> reads the PR diff ->
+        judges the diff against that context -> writes a readiness report.
+  NOT for: General code review (use archon-smart-pr-review). This workflow
+        deliberately does not comment on style, tests or naming.
+
+  Requires the Serro MCP server. Read-only against your codebase: it writes
+  only into the run's artifacts directory, and posts nothing anywhere.
+
+tags: [review, serro, context]
+worktree:
+  enabled: false
+mutates_checkout: false
+
+nodes:
+  # ---------------------------------------------------------------------------
+  # 1. Context. Resolves the program and loads its live state from Serro.
+  #    Writes $ARTIFACTS_DIR/serro-context.{json,md}.
+  # ---------------------------------------------------------------------------
+  - id: serro-context
+    command: serro-context
+    description: Load the Serro program context this PR belongs to
+    denied_tools: [Edit, NotebookEdit]
+
+  # ---------------------------------------------------------------------------
+  # 2. Guard. Deterministic: fails the run when context is missing rather than
+  #    letting a context-free answer through wearing Serro's name.
+  # ---------------------------------------------------------------------------
+  - id: guard
+    bash: bash .archon/scripts/serro-context-guard.sh
+    depends_on: [serro-context]
+
+  # ---------------------------------------------------------------------------
+  # 3. Diff. Plain shell — no model needed to run git.
+  # ---------------------------------------------------------------------------
+  - id: pr-diff
+    description: Collect the PR diff (or the working branch diff as a fallback)
+    depends_on: [guard]
+    timeout: 120
+    bash: bash .archon/scripts/collect-pr-diff.sh
+
+  # ---------------------------------------------------------------------------
+  # 4. Assess. The only reasoning step. Program context x diff -> verdict.
+  # ---------------------------------------------------------------------------
+  - id: assess
+    depends_on: [pr-diff]
+    denied_tools: [Edit, NotebookEdit]
+    prompt: |
+      You are judging whether a pull request is safe to merge **for this specific
+      program**, using context the program already holds. You are not a style
+      reviewer. Ignore naming, formatting, test coverage and idiom unless they
+      directly threaten something in the context below.
+
+      ## Program context
+      Read `$ARTIFACTS_DIR/serro-context.json` in full. Its summary:
+
+      $serro-context.output
+
+      ## The change
+      - Diff: `$ARTIFACTS_DIR/pr-diff.txt`
+      - PR metadata: `$ARTIFACTS_DIR/pr-meta.txt`
+      - Collection notes: $pr-diff.output
+
+      Read the diff. You may read files from the repository to understand the
+      surrounding code. Do not modify anything.
+
+      ## What to look for
+
+      Work through these four lenses, in this order. Each one is a question only
+      answerable with program context — that is the point of this workflow.
+
+      1. **Open risks** — does this change touch the subject of an open risk?
+         Does it mitigate it, worsen it, or silently invalidate the assumption
+         the risk was logged under? A change that resolves an open risk is a
+         finding worth surfacing too.
+      2. **Committed customer requirements** — does the change contradict, break,
+         or partially implement something the program has *committed* to a named
+         customer? Partial implementation of a committed requirement is the most
+         expensive failure mode here: it ships, it looks done, and the commitment
+         is still open.
+      3. **Recorded decisions** — does the change go against a decision the
+         program already made? If so, quote the decision. A reversal may be
+         correct — but it must be deliberate, not accidental.
+      4. **Open action items** — is this change blocked by, or does it complete,
+         an open action item?
+
+      ## Rules of evidence
+
+      - Every finding must cite **both** sides: the diff location
+        (`path:line` or hunk header) **and** the context item (its id or exact
+        title). A finding that cites only one side is speculation — drop it.
+      - If the context is thin (no risks, no requirements, empty widget
+        catalog), say so plainly and return `verdict: ready_with_caveats` with
+        the caveat that there was little to check against. Do not manufacture
+        findings to look useful.
+      - Rank findings by consequence, not by count.
+
+      ## Verdict
+
+      - `not_ready` — at least one finding contradicts a committed requirement or
+        a recorded decision, or materially worsens an open high-severity risk.
+      - `ready_with_caveats` — findings exist but none are blocking, or the
+        program context was too thin to judge confidently.
+      - `ready` — no conflicts found against a program context that was
+        substantive enough to check.
+    output_format:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum: [ready, ready_with_caveats, not_ready]
+        blocking_count:
+          type: string
+        program_name:
+          type: string
+        summary:
+          type: string
+        findings_markdown:
+          type: string
+      required: [verdict, blocking_count, program_name, summary, findings_markdown]
+
+  # ---------------------------------------------------------------------------
+  # 5. Report. Renders the verdict into a readable artifact.
+  # ---------------------------------------------------------------------------
+  - id: report
+    depends_on: [assess]
+    denied_tools: [Edit, NotebookEdit]
+    allowed_tools: [Write, Read]
+    prompt: |
+      Write `$ARTIFACTS_DIR/pr-readiness-report.md`. Nothing else — do not post
+      to GitHub, Slack or Serro.
+
+      Structure:
+
+      ```
+      # PR Readiness — <program name>
+
+      **Verdict:** <ready | ready with caveats | NOT READY>
+      **Change:** <PR title and number, or branch name, from $ARTIFACTS_DIR/pr-meta.txt>
+      **Checked against:** <n> open risks, <n> committed requirements, <n> decisions, <n> open action items
+
+      ## Summary
+      <2-3 sentences. Lead with the consequence, not the process.>
+
+      ## Findings
+      <the findings, most consequential first. For each: what the diff does,
+      which context item it collides with, and what to do about it.>
+
+      ## Checked and clear
+      <one line per lens that came back clean, so the reader knows what was
+      actually examined rather than skipped.>
+      ```
+
+      Verdict and findings, verbatim from the assessment:
+
+      Verdict: $assess.output.verdict
+      Blocking: $assess.output.blocking_count
+      Program: $assess.output.program_name
+      Summary: $assess.output.summary
+
+      $assess.output.findings_markdown
+
+      Do not soften the verdict, and do not add findings that are not above.
+      Finish by printing the absolute path of the file you wrote and the verdict.

@@ -1,0 +1,241 @@
+name: serro-design-pr-review
+description: |
+  Use when: You want a PR checked against the design source of truth — a
+  design.md, a PRD, a linked design doc — rather than against code style.
+  Triggers: "design review", "check PR against design.md", "does this match the
+            design", "design drift", "spec compliance".
+  Does: Locates the design source of truth (in the repo and in Serro) -> reads
+        the PR diff -> finds where implementation drifts from stated design
+        intent and from the program's recorded design decisions -> writes a
+        design review.
+  NOT for: Code correctness (use archon-smart-pr-review) or merge safety
+        (use serro-pr-readiness).
+
+  Requires the Serro MCP server. Read-only: writes only into the run's
+  artifacts directory, and posts nothing anywhere.
+
+tags: [review, serro, design, context]
+worktree:
+  enabled: false
+mutates_checkout: false
+
+nodes:
+  - id: serro-context
+    command: serro-context
+    description: Load the program context, including recorded design decisions
+    denied_tools: [Edit, NotebookEdit]
+
+  - id: guard
+    bash: bash .archon/scripts/serro-context-guard.sh
+    depends_on: [serro-context]
+
+  - id: pr-diff
+    description: Collect the change under review
+    depends_on: [guard]
+    timeout: 120
+    bash: bash .archon/scripts/collect-pr-diff.sh
+
+  # Find candidate design docs deterministically before spending a model on it.
+  - id: find-design-files
+    description: Locate design documents committed in the repository
+    depends_on: [guard]
+    timeout: 60
+    bash: |
+      set -uo pipefail
+      OUT="$ARTIFACTS_DIR/design-candidates.txt"
+
+      # Tracked files only — never wander into node_modules or build output.
+      git ls-files \
+        | grep -iE '(^|/)(design|architecture|spec|prd|rfc)[^/]*\.(md|mdx)$|(^|/)docs/.*(design|spec|prd|rfc)[^/]*\.(md|mdx)$' \
+        | head -40 > "$OUT" || : > "$OUT"
+
+      if [ ! -s "$OUT" ]; then
+        echo "none" > "$OUT"
+        echo "repo_design_docs=0"
+      else
+        echo "repo_design_docs=$(wc -l < "$OUT" | tr -d ' ')"
+        cat "$OUT"
+      fi
+
+  # Establish the design source of truth from both sides: repo and Serro.
+  - id: design-source
+    description: Assemble the design source of truth from the repo and from Serro
+    depends_on: [find-design-files, serro-context]
+    denied_tools: [Edit, NotebookEdit]
+    prompt: |
+      Establish what this program's **design source of truth** actually is, then
+      write it down. You are not reviewing anything yet.
+
+      ## Candidates in the repository
+      `$ARTIFACTS_DIR/design-candidates.txt` ($find-design-files.output)
+
+      Read the plausible ones. If `$ARGUMENTS` names a specific file, that file
+      wins over anything you discover.
+
+      ## Candidates in Serro
+      Program context: `$ARTIFACTS_DIR/serro-context.json`
+      Summary: $serro-context.output
+
+      Look for design intent Serro already holds:
+
+      - `mcp__serro__get_program_files` and `mcp__serro__get_program` — linked
+        design documents and the program objective / current state.
+      - `mcp__serro__get_program_widget_data` with `widget_type: decision_log` —
+        **recorded design decisions are the highest-value input to this
+        workflow.** A repo `design.md` goes stale; a decision log records what
+        the team actually agreed and when.
+      - `mcp__serro__search_confluence` or `mcp__serro__drive` if the program's
+        design lives outside the repo.
+
+      ## Write `$ARTIFACTS_DIR/design-source.md`
+
+      ```
+      # Design source of truth
+
+      ## Primary
+      <the authoritative document(s), with path or URL, and how you concluded
+      they are authoritative>
+
+      ## Design intent
+      <the specific, checkable assertions the design makes: structure,
+      boundaries, naming, data flow, states, error behaviour. Quote them. An
+      assertion you cannot quote is not checkable — leave it out.>
+
+      ## Recorded design decisions (from Serro)
+      <each with id, date, and what it constrains>
+
+      ## Conflicts within the sources
+      <where the repo doc and the decision log disagree. This matters: it means
+      the design itself is ambiguous, and a reviewer must not pick a side
+      silently.>
+
+      ## Gaps
+      <areas the change touches that the design says nothing about>
+      ```
+
+      If you find **no** design source in either place, say exactly that and
+      write `PRIMARY: none` at the top of the file. Do not reconstruct a design
+      from the code — that would make the review circular and worthless.
+
+      End your turn with one line: `DESIGN SOURCE: <path/url>` or
+      `DESIGN SOURCE: none`.
+
+  - id: review
+    description: Find design drift between the change and the stated intent
+    depends_on: [design-source, pr-diff]
+    denied_tools: [Edit, NotebookEdit]
+    prompt: |
+      Review the change against the design source of truth. Style, naming
+      conventions, tests and performance are out of scope unless the design
+      document explicitly speaks to them.
+
+      ## Inputs
+      - Design source: `$ARTIFACTS_DIR/design-source.md` ($design-source.output)
+      - Diff: `$ARTIFACTS_DIR/pr-diff.txt` ($pr-diff.output)
+      - PR metadata: `$ARTIFACTS_DIR/pr-meta.txt`
+      - Program context: `$ARTIFACTS_DIR/serro-context.json`
+
+      Read the diff, then read enough surrounding code to tell whether an
+      apparent deviation is real. Do not modify anything.
+
+      ## What counts as a finding
+
+      1. **Contradiction** — the change does something the design says not to do,
+         or does it differently from how the design says to do it.
+      2. **Decision reversal** — the change goes against a recorded design
+         decision in Serro's decision log. Quote the decision and its date.
+      3. **Silent extension** — the change introduces a new concept, boundary or
+         state the design does not cover. Not automatically wrong, but it must
+         be surfaced, because the design is now behind the code.
+      4. **Stale design** — the design document describes something the code has
+         already moved past. The fix here is to the document, not the code; say
+         so.
+
+      ## Rules of evidence
+
+      - Every finding cites the design assertion (quoted) **and** the diff
+        location (`path:line` or hunk). Both, always. If you cannot quote the
+        design, you are inferring intent — drop the finding.
+      - If `DESIGN SOURCE: none`, do not invent one. Return
+        `verdict: no_design_source` and explain what to create so the next run
+        is useful. This is a legitimate, useful outcome.
+      - Separate "contradicts the design" from "the design is silent". Reviewers
+        act on these very differently.
+      - Rank by consequence. A boundary violation outranks a naming deviation.
+
+      ## Verdict
+
+      - `drift` — at least one contradiction or decision reversal.
+      - `extends_design` — no contradictions, but the change goes beyond what the
+        design covers and the design needs updating.
+      - `aligned` — the change is consistent with a design source substantive
+        enough to check against.
+      - `no_design_source` — nothing authoritative to check against.
+    output_format:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum: [aligned, extends_design, drift, no_design_source]
+        design_source:
+          type: string
+        program_name:
+          type: string
+        finding_count:
+          type: string
+        summary:
+          type: string
+        findings_markdown:
+          type: string
+        design_updates_markdown:
+          type: string
+      required:
+        - verdict
+        - design_source
+        - program_name
+        - finding_count
+        - summary
+        - findings_markdown
+        - design_updates_markdown
+
+  - id: report
+    depends_on: [review]
+    denied_tools: [Edit, NotebookEdit]
+    allowed_tools: [Write, Read]
+    prompt: |
+      Write `$ARTIFACTS_DIR/design-review.md`. Nothing else — do not post to
+      GitHub, Slack or Serro, and do not edit the design document.
+
+      ```
+      # Design Review — $review.output.program_name
+
+      **Verdict:** <ALIGNED | EXTENDS DESIGN | DRIFT | NO DESIGN SOURCE>
+      **Design source:** $review.output.design_source
+      **Change:** <from $ARTIFACTS_DIR/pr-meta.txt>
+
+      ## Summary
+      $review.output.summary
+
+      ## Findings (<count>)
+      <each: quoted design assertion, the diff location, why they conflict,
+      and the smallest change that resolves it>
+
+      ## Suggested design updates
+      <where the document should change rather than the code>
+
+      ## Out of scope
+      <one line naming what this review did not examine, so nobody reads it as a
+      full code review>
+      ```
+
+      Verbatim inputs:
+
+      Verdict: $review.output.verdict
+      Findings: $review.output.finding_count
+
+      $review.output.findings_markdown
+
+      Design updates:
+      $review.output.design_updates_markdown
+
+      Finish by printing the file path and the verdict.
