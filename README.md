@@ -17,7 +17,7 @@ your repo than in ours, because the context is yours.
 | Kind | Lives in | Runs on | Installed by |
 |---|---|---|---|
 | **Workflow** — a multi-step DAG that gathers context, reasons, and writes a report | `recipes/<slug>/` | Archon | `archon workflow install` |
-| **Skill** — instructions an agent loads when the task calls for it | `skills/<slug>/` | Claude Code, Codex, Copilot, Archon; ChatGPT by copy-paste | copy `SKILL.md` into the runtime's skills directory |
+| **Skill** — instructions an agent loads when the task calls for it | `skills/<slug>/` | Claude Code, Codex, Copilot, Archon; ChatGPT by copy-paste | `npx skills add` (or copy `SKILL.md` yourself) |
 
 A workflow is something you *run*. A skill is something an agent *knows*. They
 share the context contract — both read program state through Serro MCP — and
@@ -58,9 +58,29 @@ archon workflow run serro-pr-readiness "1234"
 
 ## Install a skill
 
-Skills are a single `SKILL.md`. There is no CLI — you copy the file into the
-directory your runtime scans, and it loads when its `description` matches what you
-are doing.
+A skill is a single `SKILL.md` that your agent loads when its `description` matches
+what you are doing. The easiest way in is the
+[agentskills.io](https://skills.sh) CLI:
+
+```bash
+npx skills add SerroAI/serro-recipes --skill serro-context
+```
+
+It prompts for which agents to install into, then **symlinks** — so
+`npx skills update` keeps the skill current. Useful flags:
+
+| Flag | Effect |
+|---|---|
+| `-g` | install for yourself across every repo, not just this one |
+| `--copy` | an independent copy that will not change under you |
+| `-a claude-code -a codex` | target specific agents, skipping the prompt |
+| `-y` | non-interactive, for CI |
+
+Omit `--skill` to pick from all of them interactively.
+
+### Or copy the file yourself
+
+No CLI, no dependency — but it is a plain copy, so it will not auto-update.
 
 **Claude Code** reads `.claude/skills/`:
 
@@ -70,8 +90,7 @@ curl -fsSL https://raw.githubusercontent.com/SerroAI/serro-recipes/main/skills/s
   -o .claude/skills/serro-context/SKILL.md
 ```
 
-**Codex, Copilot and Archon** resolve the [agentskills.io](https://agentskills.io)
-layout, `.agents/skills/`:
+**Codex, Copilot and Archon** resolve the agentskills.io layout, `.agents/skills/`:
 
 ```bash
 mkdir -p .agents/skills/serro-context
