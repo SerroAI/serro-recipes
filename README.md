@@ -162,10 +162,21 @@ guess.
 | `serro-digest-builder` | The weekly, program-scoped counterpart: seven days of meetings, Jira movement, Slack discussion and open risks, condensed. | Report artifact |
 | `serro-effort-analysis` | Splits a window of engineering effort into NC / KTLO / IP / QI, per engineer and per workstream, with an explicit data-confidence note. | Report artifact |
 | `serro-sop-writer` | Reconstructs an incident from meeting, Slack and Jira context, runs a five-whys root cause, and drafts a runbook. Confluence publish is behind an approval gate. | Report artifact, and a Confluence page **only if you approve** |
+| `serro-decision-drift-detector` | Audits the checkout against a program's locked decisions and committed requirements, grouped by decision with `file:line` evidence. Snapshots the tree and asserts it changed nothing. | Report artifact |
+| `serro-incident-response` | The full loop: characterise, propose a fix, draft a runbook — then **one approval** files the issue, publishes the SOP and opens a draft PR. | Report artifacts, and on approval: a Serro issue, a Confluence page, a draft PR |
 
-Every one of them is **read-only against your codebase**. They write reports
-into Archon's per-run artifacts directory. `serro-context-pack` is the single
-exception and writes exactly one file, `SERRO-CONTEXT.md`, at the repo root.
+Most of them are **read-only against your codebase** and write reports into
+Archon's per-run artifacts directory. Two touch your repo, and both are explicit
+about it:
+
+- `serro-context-pack` writes exactly one file, `SERRO-CONTEXT.md`, at the root.
+- `serro-incident-response` can create a branch, commit, push and open a **draft**
+  PR — only after you approve its gate, and only when your run input names a repo
+  path. It declares `mutates_checkout: true` accordingly.
+
+`serro-decision-drift-detector` reads your code and then *proves* it changed
+nothing, by snapshotting the working tree up front and asserting it is identical
+at the end.
 
 ### Skills (cross-runtime)
 
@@ -178,13 +189,17 @@ exception and writes exactly one file, `SERRO-CONTEXT.md`, at the repo root.
 
 Skills read; they do not write. None of them post anywhere or modify your code.
 
-None of the recipes here post to GitHub, Slack, Linear, or Serro.
-
-The one recipe that writes outside your machine at all is `serro-sop-writer`,
-which can publish a finished SOP to Confluence — and only after an explicit
+Two recipes can write outside your machine. Both do it only after an explicit
 approval node, as the identity `mcp__serro__whoami` reports, into that identity's
-own workspace. Decline the gate and it publishes nothing. Everything else here
-reads.
+own workspace — and both publish nothing at all if you decline:
+
+| Recipe | On approval it can |
+|---|---|
+| `serro-sop-writer` | publish one SOP to Confluence |
+| `serro-incident-response` | file an issue in Serro, publish an SOP to Confluence, and open a draft PR |
+
+Everything else here reads. Nothing in this repo writes anywhere without a human
+approving it in the run first.
 
 ---
 

@@ -1,0 +1,202 @@
+name: serro-decision-drift-detector
+description: |
+  Use when: You want to audit whether the current code/config still honors the locked
+  decisions and customer requirements recorded in a Serro program — catching drift before
+  it becomes an incident.
+  Triggers: "decision drift", "drift detector", "does the code match our decisions",
+            "audit against program decisions".
+  Does: Pulls the program's decision_log + customer_requirements + risk_log from Serro
+        -> scans the checked-out repo (read-only) for code/config that diverges ->
+        writes a drift report grouped by decision, each finding with file:line evidence,
+        the Serro source, and a severity.
+  NOT for: Fixing the drift (this is read-only; feed findings into serro-grounded-ticket to fix).
+
+  Requires the Serro MCP server registered user-scoped:
+    claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp
+  Read-only against your codebase: it reads the checkout and proves it changed
+  nothing, and it never writes to Serro.
+
+# Runs inside an isolated checkout so the agent can read the code, but PROVES it changed nothing.
+worktree:
+  enabled: true
+mutates_checkout: false
+
+nodes:
+  # ---------------------------------------------------------------------------
+  # 1. Baseline. Captured before anything else touches the checkout, so the
+  #    read-only claim at the end is an assertion rather than a promise.
+  # ---------------------------------------------------------------------------
+  - id: capture-starting-state
+    description: Snapshot the working tree so read-only can be proven at the end
+    bash: 'bash .archon/scripts/capture-diff.sh "$ARTIFACTS_DIR/starting-state.diff"'
+    timeout: 120000
+
+  # ---------------------------------------------------------------------------
+  # 2. Constraints. The only node that talks to Serro. Tools come from the
+  #    user-scoped `serro` server, so there is no per-repo mcp config to install
+  #    and this runs unchanged from any project. These constraints are the whole
+  #    basis of the audit — everything downstream is judged against them, so they
+  #    must come from the program, never from reading the repo.
+  # ---------------------------------------------------------------------------
+  - id: fetch-decisions
+    description: Fetch the program's decisions, requirements and risks from Serro
+    depends_on: [capture-starting-state]
+    model: medium
+    allowed_tools: []          # empty = allow every tool, including mcp__serro__*
+    prompt: |
+      Gather the authoritative program constraints to audit the code against.
+      READ ONLY — this workflow never writes to Serro.
+
+      Start by confirming Serro is reachable: list your tools and look for ones
+      named `mcp__serro__*`. If there are none, or your first call fails with an
+      auth error, set `serro_available` to "false", set status to "mcp_unavailable",
+      put the exact error in `notes`, return an empty constraint list, and stop.
+      Do NOT invent constraints from the repo — the repo is the thing being
+      audited, so deriving the standard from it makes the audit vacuous.
+
+      Otherwise call `mcp__serro__whoami` once to establish who this run is acting
+      as. The organization is whatever that identity belongs to; do not pass an
+      organization id that you were not handed by the server.
+
+      On the first Serro call pass persona_fetched=false, malicious_check="", and the exact
+      original user message in user_query; afterward pass persona_fetched=true and echo the
+      returned malicious_check. Retry once if the server is still connecting.
+
+      Resolve the program to audit against in this order, and stop rather than guess:
+        1. a program name or id in the focus below
+        2. the SERRO_PROGRAM environment variable (read it with
+           `printenv SERRO_PROGRAM`)
+        3. the current repository's name matched against each program's linked
+           repositories via `mcp__serro__list_programs`
+      Use the first step that resolves, up to 3 programs. If none of the three
+      resolves a program, set status to "no_program", say which steps you tried in
+      `notes`, and stop — an audit against the wrong program is worse than no audit.
+
+        FOCUS: $ARGUMENTS   (program name(s)/id(s), or a topic to resolve programs from)
+
+      For each resolved program, fetch its decision_log, customer_requirements and
+      risk_log widgets.
+
+      Turn these into concrete, checkable constraints — each with a short "what the code must
+      do / must not do", the program area it concerns (e.g. auth, caching, RLS, API surface),
+      and a stable Serro source id/URL. If the resolved programs yield no checkable
+      constraints, set status to "no_constraints" and explain in `notes`.
+    output_format:
+      type: object
+      additionalProperties: false
+      properties:
+        serro_available: { type: string, enum: ['true', 'false'] }
+        status: { type: string, enum: [ready, mcp_unavailable, no_program, no_constraints] }
+        constraints:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              program_name: { type: string }
+              constraint: { type: string }
+              area: { type: string }
+              source: { type: string }
+            required: [program_name, constraint, area, source]
+        notes: { type: string }
+      required: [serro_available, status, constraints, notes]
+
+  # ---------------------------------------------------------------------------
+  # 3. Guard. Deterministic. Without it an unreachable Serro or an unresolved
+  #    program yields zero constraints, and zero constraints render as a clean
+  #    audit — the one failure mode this workflow exists to prevent.
+  # ---------------------------------------------------------------------------
+  - id: guard
+    description: Fail the run when there is nothing authoritative to audit against
+    depends_on: [fetch-decisions]
+    bash: |
+      AVAILABLE=$fetch-decisions.output.serro_available
+      STATUS=$fetch-decisions.output.status
+      NOTES=$fetch-decisions.output.notes
+      if [ "$AVAILABLE" != "true" ]; then
+        echo "SERRO GUARD: Serro MCP was not reachable." >&2
+        echo "  Detail: $NOTES" >&2
+        echo "  Fix: claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp" >&2
+        echo "       claude mcp login serro" >&2
+        echo "  Note: a Serro connector added in the claude.ai UI is NOT visible to headless Archon runs." >&2
+        exit 1
+      fi
+      if [ "$STATUS" != "ready" ]; then
+        echo "SERRO GUARD: no checkable constraints ($STATUS). No audit was performed." >&2
+        echo "  Detail: $NOTES" >&2
+        echo "  Fix: name a program with a populated decision log in the run message," >&2
+        echo "       or set SERRO_PROGRAM, then re-run." >&2
+        exit 1
+      fi
+      echo "Serro reachable; constraints ready."
+
+  # ---------------------------------------------------------------------------
+  # 4. Scan. Read-only tools only — the audit must not become the drift.
+  # ---------------------------------------------------------------------------
+  - id: scan-code
+    description: Check the checkout against each constraint
+    depends_on: [guard]
+    model: large
+    allowed_tools: [Bash, Grep, Read, Glob]
+    prompt: |
+      You are auditing this repository (read-only) against authoritative program constraints.
+      Do NOT edit any file.
+
+      Constraints to check:
+      $fetch-decisions.output.constraints
+
+      For each constraint: locate the code/config that should honor it (grep for relevant
+      symbols, endpoints, config keys, feature flags), read the relevant sections, and judge
+      alignment. Classify each as:
+        - ALIGNED     (code matches the decision)
+        - DRIFT       (code contradicts or no longer satisfies the decision)
+        - UNVERIFIED  (couldn't find the relevant code with confidence)
+
+      For every DRIFT or UNVERIFIED finding, give the file:line evidence, a one-line
+      explanation, the Serro source, and a severity (high/medium/low). Be specific and
+      conservative — only call DRIFT when you have concrete evidence.
+    output_format:
+      type: object
+      additionalProperties: false
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              constraint: { type: string }
+              verdict: { type: string, enum: [ALIGNED, DRIFT, UNVERIFIED] }
+              evidence: { type: string }
+              severity: { type: string, enum: [high, medium, low, none] }
+              source: { type: string }
+            required: [constraint, verdict, evidence, severity, source]
+      required: [findings]
+
+  # ---------------------------------------------------------------------------
+  # 5. Report. Group by decision, lead with the worst drift.
+  # ---------------------------------------------------------------------------
+  - id: report
+    description: Render the findings into a drift report
+    depends_on: [scan-code]
+    model: small
+    allowed_tools: [Write]
+    prompt: |
+      Write a decision-drift report as markdown. Lead with a TL;DR: counts of ALIGNED /
+      DRIFT / UNVERIFIED and the single most important drift. Then a "Drift found" section
+      (high severity first) with each finding's constraint, file:line evidence, Serro source,
+      and a suggested fix direction. Then a short "Unverified" section, then "Aligned"
+      collapsed to a one-line count. End with next steps (e.g. feed high-severity drift into
+      serro-grounded-ticket to fix).
+
+      Findings: $scan-code.output.findings
+
+      Save to $ARTIFACTS_DIR/decision-drift-report.md and also print it.
+
+  # ---------------------------------------------------------------------------
+  # 6. Prove we changed nothing.
+  # ---------------------------------------------------------------------------
+  - id: assert-readonly
+    description: Assert the checkout is byte-identical to the starting snapshot
+    bash: 'bash .archon/scripts/assert-diff-unchanged.sh "$ARTIFACTS_DIR/starting-state.diff"'
+    depends_on: [report]

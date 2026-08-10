@@ -122,6 +122,32 @@
       "featured": false
     },
     {
+      "slug": "serro-decision-drift-detector",
+      "kind": "archon-workflow",
+      "name": "Decision Drift Detector",
+      "author": "SerroAI",
+      "description": "Audit the checked-out repo against the program's locked decisions, committed customer requirements and open risks, then report divergence grouped by decision — each finding carrying file:line evidence, the Serro item it contradicts, and a severity.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-decision-drift-detector",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["review", "context"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": false
+    },
+    {
+      "slug": "serro-incident-response",
+      "kind": "archon-workflow",
+      "name": "Incident Response",
+      "author": "SerroAI",
+      "description": "The full incident loop in one run: characterise the issue from Serro context, propose a code fix as a patch and PR body, and draft a five-whys SOP. Everything up to that point is read-only. A single approval gate then files the issue in Serro, publishes the SOP to Confluence, and opens a draft PR with the fix.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-incident-response",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["automation", "incident"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": false
+    },
+    {
       "slug": "serro-context",
       "kind": "agent-skill",
       "name": "Program Context",

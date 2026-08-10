@@ -1,0 +1,275 @@
+name: serro-incident-response
+description: |
+  Use when: A technical issue needs the full loop in one run — REPORT the issue,
+  WRITE an SOP for it, and AUTO-ADDRESS it with a proposed fix — all sourced from Serro.
+  Triggers: "incident response", "handle this issue", "report fix and document",
+            "serro incident", "full incident loop".
+  Does: Gathers + characterizes the issue -> proposes a code fix (patch + PR body)
+        -> drafts a five-whys SOP -> ONE human approval -> then files the issue,
+        publishes the SOP to Confluence, and (if a repo path is given) opens a
+        draft PR with the fix.
+  NOT for: Non-incident work, or anything you are not prepared to have filed,
+           published and pushed once you approve the gate.
+
+  Requires the Serro MCP server registered user-scoped:
+    claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp
+
+# ============================ SAFETY CONTRACT ============================
+# - All reads and drafts run BEFORE the approval gate; NO writes happen until
+#   a human approves.
+# - Every write node re-checks the approval decision and refuses to act on its
+#   own initiative.
+# - The run acts as whatever identity `mcp__serro__whoami` reports. No node may
+#   pass an organization id it was not handed by the server.
+# =========================================================================
+
+# Stated rather than left to the default, which is also true. Every sibling recipe
+# here declares `false`, so silence would read as an oversight on the one workflow
+# that can commit and push. True keeps the same-checkout path lock, refusing a
+# second run while another holds the path.
+mutates_checkout: true
+
+nodes:
+  # ---------------------------------------------------------------------------
+  # 1. Intake. The only read node that talks to Serro. Tools come from the
+  #    user-scoped `serro` server, so there is no per-repo mcp config to install
+  #    and this runs unchanged from any project. Everything downstream — the fix,
+  #    the SOP, the filed issue — is built on this characterization.
+  # ---------------------------------------------------------------------------
+  - id: intake
+    description: Gather and characterize the issue from Serro
+    model: medium
+    allowed_tools: []          # empty = allow every tool, including mcp__serro__*
+    prompt: |
+      Gather and characterize the issue. Perform READS ONLY in this node — nothing
+      is filed, published or pushed until a human has approved.
+
+      Start by confirming Serro is reachable: list your tools and look for ones
+      named `mcp__serro__*`. If there are none, or your first call fails with an
+      auth error, set `serro_available` to "false", put the exact error in `notes`,
+      return empty values, and stop. Never fill the gap with a plausible-looking
+      incident — everything after this node gets published or pushed on approval,
+      so an invented symptom becomes an invented issue and an invented fix.
+
+      Otherwise call `mcp__serro__whoami` once to establish who this run is acting
+      as. The organization is whatever that identity belongs to; do not pass an
+      organization id that you were not handed by the server.
+
+      Issue reference (Slack thread, meeting, Jira key, repo/PR, or free description):
+        $ARGUMENTS
+
+      Gather, using whichever tools actually exist in your tool list rather than
+      assuming names:
+        - the Slack thread and meeting where it was reported and discussed
+        - any existing tracking issue
+        - the likely affected code — repo activity, code history
+        - the program or workstream it maps to, resolved in this order and left
+          empty rather than guessed: a program name or id in the run message; the
+          SERRO_PROGRAM environment variable (`printenv SERRO_PROGRAM`); the
+          current repository's name matched against each program's linked
+          repositories via `mcp__serro__list_programs`
+
+      Where a source genuinely returns nothing, use an empty value and record that
+      in `notes`.
+    output_format:
+      type: object
+      properties:
+        serro_available:
+          type: string
+          enum: ['true', 'false']
+        title: { type: string }
+        severity: { type: string }
+        symptoms: { type: string }
+        evidence: { type: array, items: { type: string } }
+        affected_repo: { type: string }
+        affected_area: { type: string }
+        suspected_cause: { type: string }
+        existing_issue_key: { type: string }
+        source_refs: { type: array, items: { type: string } }
+        notes: { type: string }
+      required: [serro_available, title, severity, symptoms, evidence, affected_repo, affected_area, suspected_cause, source_refs, notes]
+
+  # ---------------------------------------------------------------------------
+  # 2. Guard. Deterministic. Without it an unreachable Serro produces an empty
+  #    characterization that still flows into a fix, an SOP and an approval
+  #    prompt — the run would ask a human to approve publishing nothing.
+  # ---------------------------------------------------------------------------
+  - id: guard
+    description: Fail the run when Serro was unreachable, rather than acting on an empty intake
+    depends_on: [intake]
+    bash: |
+      AVAILABLE=$intake.output.serro_available
+      NOTES=$intake.output.notes
+      if [ "$AVAILABLE" != "true" ]; then
+        echo "SERRO GUARD: Serro MCP was not reachable." >&2
+        echo "  Detail: $NOTES" >&2
+        echo "  Fix: claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp" >&2
+        echo "       claude mcp login serro" >&2
+        echo "  Note: a Serro connector added in the claude.ai UI is NOT visible to headless Archon runs." >&2
+        exit 1
+      fi
+      echo "Serro reachable."
+
+  # ---------------------------------------------------------------------------
+  # 3. Propose the fix. Artifacts only — no repo is touched and nothing is pushed
+  #    at this stage, so the approver sees the patch before it can exist anywhere.
+  # ---------------------------------------------------------------------------
+  - id: propose-fix
+    description: Draft the fix as a patch and PR body, without touching any repo
+    depends_on: [guard]
+    model: medium
+    allowed_tools: [Write]
+    prompt: |
+      Propose the fix that AUTO-ADDRESSES this issue. Do NOT modify any repo or push
+      anything here — produce a plan + patch + PR description as artifacts only.
+
+      Issue: $intake.output.title  (severity $intake.output.severity)
+      Symptoms: $intake.output.symptoms
+      Affected repo/area: $intake.output.affected_repo / $intake.output.affected_area
+      Suspected cause: $intake.output.suspected_cause
+      Evidence: $intake.output.evidence
+
+      Deliver:
+      1. Root-cause hypothesis and the minimal change that addresses it
+      2. A concrete patch (unified diff) or precise file-by-file change description
+      3. A PR title + description (what/why/risk/test plan)
+      4. Any follow-ups or guardrails
+
+      Save to $ARTIFACTS_DIR/fix-proposal.md and print a short summary.
+
+  # ---------------------------------------------------------------------------
+  # 4. Draft the SOP. Also artifacts only, and in parallel with the fix — the two
+  #    answer different questions about the same incident.
+  # ---------------------------------------------------------------------------
+  - id: draft-sop
+    description: Draft the five-whys SOP as a local artifact
+    depends_on: [guard]
+    model: medium
+    allowed_tools: [Write]
+    prompt: |
+      Write a technical SOP / runbook for this incident. Structure:
+      1. Summary  2. Impact & scope  3. Timeline  4. Root cause — five whys
+      5. Resolution  6. Prevention  7. Runbook (numbered, copy-pasteable steps)
+
+      Issue: $intake.output.title
+      Symptoms: $intake.output.symptoms
+      Suspected cause: $intake.output.suspected_cause
+      Evidence: $intake.output.evidence
+      Sources: $intake.output.source_refs
+
+      Save to $ARTIFACTS_DIR/sop.md and print a short summary.
+
+  # ---------------------------------------------------------------------------
+  # 5. Human gate. One approval covers all three writes, so the approver sees the
+  #    complete blast radius in a single decision rather than three partial ones.
+  # ---------------------------------------------------------------------------
+  - id: approve-writes
+    depends_on: [propose-fix, draft-sop]
+    approval:
+      message: |
+        Review before any write happens:
+          - Issue to file:      $intake.output.title  ($intake.output.severity)
+          - Fix proposal:       $ARTIFACTS_DIR/fix-proposal.md
+          - SOP to publish:     $ARTIFACTS_DIR/sop.md
+        Approving will: (1) file/report the issue in Serro, (2) publish the SOP to
+        Confluence, and (3) IF you provided a repo path in the run input, push a
+        branch and open a DRAFT PR with the fix. Reject to keep everything local.
+      capture_response: true
+
+  # ---------------------------------------------------------------------------
+  # 6. Write 1 — file the issue.
+  # ---------------------------------------------------------------------------
+  - id: report-issue
+    description: File the issue in Serro
+    depends_on: [approve-writes]
+    model: medium
+    allowed_tools: []          # empty = allow every tool, including mcp__serro__*
+    prompt: |
+      Reviewer decision: $approve-writes.output
+      Only proceed if the reviewer approved; otherwise report "skipped" and do nothing.
+
+      You act as whatever identity `mcp__serro__whoami` reports, and you write only
+      into that identity's own workspace. Do not pass an organization id that you
+      were not handed by the server. If a tool would act outside that scope, STOP
+      and report rather than proceeding.
+
+      File/report this issue using the best available Serro write tool (e.g. create a
+      tracked agent task, and/or notify the owner; if a Jira/issue-creation tool is
+      available, use it). Reference the existing issue key if present
+      ($intake.output.existing_issue_key). Report what you created (IDs/links).
+
+      Issue: $intake.output.title ($intake.output.severity)
+      Summary: $intake.output.symptoms
+      Suspected cause: $intake.output.suspected_cause
+      Sources: $intake.output.source_refs
+
+  # ---------------------------------------------------------------------------
+  # 7. Write 2 — publish the SOP.
+  # ---------------------------------------------------------------------------
+  - id: publish-sop
+    description: Publish the approved SOP to Confluence
+    depends_on: [approve-writes]
+    model: medium
+    allowed_tools: [Read]
+    prompt: |
+      Reviewer decision: $approve-writes.output
+      Only proceed if approved; otherwise report "skipped".
+
+      You act as whatever identity `mcp__serro__whoami` reports, and you publish
+      into that identity's own workspace. Do not pass an organization id that you
+      were not handed by the server. If a tool would act outside that scope, STOP
+      and report rather than proceeding.
+
+      Read the SOP from $ARTIFACTS_DIR/sop.md and publish it to the appropriate
+      Confluence space: list the available spaces to choose, then create/update the
+      page, and attach it to the program if one applies. If no Confluence write tool
+      is available, say so and report that the SOP remains at $ARTIFACTS_DIR/sop.md.
+      Report the page URL or the skip reason.
+
+  # ---------------------------------------------------------------------------
+  # 8. Write 3 — the draft PR. Only when the caller named a repo to operate on;
+  #    otherwise this degrades to printing the commands rather than picking a
+  #    repository on its own.
+  # ---------------------------------------------------------------------------
+  - id: open-pr
+    description: Open a draft PR with the proposed fix, if a repo path was given
+    depends_on: [approve-writes]
+    model: medium
+    allowed_tools: [Bash, Read]
+    prompt: |
+      Reviewer decision: $approve-writes.output
+      Only proceed if approved; otherwise report "skipped".
+
+      The run input was: $ARGUMENTS
+      IF that input contains a local repo path to operate on, implement the fix from
+      $ARTIFACTS_DIR/fix-proposal.md there:
+        - create a new branch (e.g. incident/<slug>)
+        - apply the change
+        - commit, push, and open a DRAFT PR (gh pr create --draft) using the PR title
+          and description from the proposal
+      Then report the branch name and PR URL.
+
+      IF no repo path was provided, DO NOT touch any repo — instead print the exact
+      git/gh commands a human can run to apply $ARTIFACTS_DIR/fix-proposal.md, and report
+      "PR step deferred — no repo path supplied".
+
+  # ---------------------------------------------------------------------------
+  # 9. Summary. Runs whatever the three writes did, so a partial run still ends
+  #    with an honest account of what exists and what does not.
+  # ---------------------------------------------------------------------------
+  - id: summary
+    description: Report what was filed, published and pushed
+    depends_on: [report-issue, publish-sop, open-pr]
+    trigger_rule: all_done
+    model: small
+    allowed_tools: [Write]
+    prompt: |
+      Summarize the incident-response run. Cover: the issue reported (link/ID), the
+      SOP published (URL or local path), and the fix/PR (URL or deferred). Note
+      anything skipped and why.
+
+      Issue reported: $report-issue.output
+      SOP published: $publish-sop.output
+      Fix / PR: $open-pr.output
+
+      Save to $ARTIFACTS_DIR/incident-summary.md and print it.
