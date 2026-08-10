@@ -158,6 +158,7 @@ guess.
 | `serro-release-readiness` | Program-level go/no-go: unresolved risks, committed-but-unshipped requirements, open action items, recent repo and meeting activity. | Report artifact |
 | `serro-design-pr-review` | Reviews a PR against a design source of truth (`design.md` or a Serro-linked design doc) plus the program's design decisions. | Report artifact |
 | `serro-context-pack` | Compiles program context into a committed `SERRO-CONTEXT.md` + a Claude skill, so **any** agent (Claude Code, Codex, Codepress) inherits the context without Archon. | Repo file + skill |
+| `serro-daily-brief` | One digest of what is on today — meetings, Jira movement, program flags — scoped to your identity rather than a program. Fails rather than emitting an empty brief when Serro is unreachable. | Report artifact |
 
 Every one of them is **read-only against your codebase**. They write reports
 into Archon's per-run artifacts directory. `serro-context-pack` is the single

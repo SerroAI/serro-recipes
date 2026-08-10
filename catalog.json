@@ -70,6 +70,19 @@
       "featured": false
     },
     {
+      "slug": "serro-daily-brief",
+      "kind": "archon-workflow",
+      "name": "Daily Brief",
+      "author": "SerroAI",
+      "description": "Pull today's meetings, recent Jira movement and open decisions from Serro and synthesise them into a short, skimmable brief. When Serro is unreachable it reports the error and returns nothing rather than filling the gap — an empty brief beats an invented one.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-daily-brief",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["automation", "reporting"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": false
+    },
+    {
       "slug": "serro-context",
       "kind": "agent-skill",
       "name": "Program Context",
