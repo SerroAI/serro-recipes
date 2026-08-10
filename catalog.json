@@ -83,6 +83,45 @@
       "featured": false
     },
     {
+      "slug": "serro-digest-builder",
+      "kind": "archon-workflow",
+      "name": "Digest Builder",
+      "author": "SerroAI",
+      "description": "Pull a week of program activity from Serro — meetings, Jira movement, Slack discussion, open risks and decisions — and synthesise a skimmable digest. The weekly, program-scoped counterpart to Daily Brief.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-digest-builder",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["automation", "reporting"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": false
+    },
+    {
+      "slug": "serro-effort-analysis",
+      "kind": "archon-workflow",
+      "name": "Effort Analysis",
+      "author": "SerroAI",
+      "description": "Classify a time window of engineering effort into new capability, keep-the-lights-on, internal platform and quality investment, broken down per engineer and per workstream. Reads Jira activity, repo activity, code history and the work-mix data from Serro.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-effort-analysis",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["planning", "reporting"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": false
+    },
+    {
+      "slug": "serro-sop-writer",
+      "kind": "archon-workflow",
+      "name": "SOP Writer",
+      "author": "SerroAI",
+      "description": "Gather the meeting, Slack and Jira context around an incident from Serro, run a five-whys root-cause analysis, and draft a structured SOP. Publishing to Confluence sits behind an explicit approval gate.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-sop-writer",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": ["automation", "incident"],
+      "targets": ["archon"],
+      "archonVersionCompat": ">=0.6.0",
+      "featured": false
+    },
+    {
       "slug": "serro-context",
       "kind": "agent-skill",
       "name": "Program Context",

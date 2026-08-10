@@ -1,0 +1,138 @@
+name: serro-digest-builder
+description: |
+  Use when: You want a weekly digest of program activity — recent meetings, Jira
+  movement, Slack discussion, and open risks/decisions — pulled live from Serro.
+  Triggers: "serro digest", "weekly digest", "program digest", "build digest".
+  Does: Pulls meetings + Jira + Slack activity from Serro -> synthesizes a
+        skimmable digest -> saves it as a run artifact.
+  NOT for: Deep single-topic research (ask the agent directly instead), or a same-day
+           brief (use serro-daily-brief for that).
+
+  Requires the Serro MCP server registered user-scoped:
+    claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp
+  Read-only: writes only into the run's artifacts directory, and posts nothing.
+
+worktree:
+  enabled: false
+mutates_checkout: false
+
+nodes:
+  # ---------------------------------------------------------------------------
+  # 1. Gather. The only node that talks to Serro. Tools come from the user-scoped
+  #    `serro` server, so there is no per-repo mcp config to install and this runs
+  #    unchanged from any project. output_format forces clean structured data the
+  #    synthesize node can rely on.
+  # ---------------------------------------------------------------------------
+  - id: gather
+    model: medium
+    allowed_tools: []          # empty = allow every tool, including mcp__serro__*
+    prompt: |
+      Gather the past 7 days of program working context from Serro.
+
+      Start by confirming Serro is reachable: list your tools and look for ones
+      named `mcp__serro__*`. If there are none, or your first call fails with an
+      auth error, set `serro_available` to "false", put the exact error in `notes`,
+      return empty arrays, and stop. Never fill the gap with plausible-looking
+      activity — a digest that invents a meeting is worse than no digest.
+
+      Otherwise call `mcp__serro__whoami` once to establish who this run is acting
+      as. The organization is whatever that identity belongs to; do not pass an
+      organization id that you were not handed by the server.
+
+      Scope the digest to a program when one can be resolved, in this order:
+        1. a program name or id in the caller's focus below
+        2. the SERRO_PROGRAM environment variable (read it with
+           `printenv SERRO_PROGRAM`)
+        3. the current repository's name matched against each program's linked
+           repositories via `mcp__serro__list_programs`
+      Use the first step that resolves; never assume a program that none of them
+      named. If none resolve, cover overall activity for the identity instead and
+      record in `notes` that the digest is unscoped.
+
+        FOCUS: $ARGUMENTS
+
+      Then gather the last 7 days, using whichever tools actually exist in your
+      tool list rather than assuming names:
+        - meetings, with titles, dates and key points
+        - Jira issues created or updated in the window
+        - notable Slack discussion
+        - program status and any risks worth flagging
+
+      Where a source genuinely returns nothing, use an empty array and record that
+      in `notes`, so the reader can tell "nothing happened" apart from "the lookup
+      failed".
+    output_format:
+      type: object
+      properties:
+        serro_available:
+          type: string
+          enum: ['true', 'false']
+        meetings:
+          type: array
+          items:
+            type: object
+            properties:
+              title: { type: string }
+              date: { type: string }
+              key_points: { type: string }
+        jira_updates:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              summary: { type: string }
+              status: { type: string }
+        slack_highlights:
+          type: array
+          items: { type: string }
+        risk_flags:
+          type: array
+          items: { type: string }
+        notes:
+          type: string
+      required: [serro_available, meetings, jira_updates, slack_highlights, risk_flags, notes]
+
+  # ---------------------------------------------------------------------------
+  # 2. Guard. Deterministic. Without it an unreachable Serro merely produces an
+  #    empty digest, which reads exactly like a quiet week.
+  # ---------------------------------------------------------------------------
+  - id: guard
+    description: Fail the run when Serro was unreachable, rather than emitting an empty digest
+    depends_on: [gather]
+    bash: |
+      AVAILABLE=$gather.output.serro_available
+      NOTES=$gather.output.notes
+      if [ "$AVAILABLE" != "true" ]; then
+        echo "SERRO GUARD: Serro MCP was not reachable." >&2
+        echo "  Detail: $NOTES" >&2
+        echo "  Fix: claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp" >&2
+        echo "       claude mcp login serro" >&2
+        echo "  Note: a Serro connector added in the claude.ai UI is NOT visible to headless Archon runs." >&2
+        exit 1
+      fi
+      echo "Serro reachable."
+
+  # ---------------------------------------------------------------------------
+  # 3. Synthesize. No tool calls, so a small model is enough.
+  # ---------------------------------------------------------------------------
+  - id: synthesize
+    description: Turn the gathered data into a skimmable weekly digest
+    depends_on: [guard]
+    model: small
+    allowed_tools: [Write]
+    prompt: |
+      Write a skimmable weekly program digest from this data. Keep it under 400 words,
+      organized as: TL;DR (2-3 lines) -> Meetings -> Jira movement -> Slack highlights
+      -> Risks to watch. Lead with anything blocking or time-sensitive.
+
+      Meetings: $gather.output.meetings
+      Jira updates: $gather.output.jira_updates
+      Slack highlights: $gather.output.slack_highlights
+      Risk flags: $gather.output.risk_flags
+      Collection notes: $gather.output.notes
+
+      If the notes record that a source came back empty, say so in one line rather
+      than padding the digest.
+
+      Save the digest to $ARTIFACTS_DIR/weekly-digest.md and also print it.

@@ -1,0 +1,169 @@
+name: serro-sop-writer
+description: |
+  Use when: A technical issue/incident needs a written SOP or runbook, sourced from the
+  meeting, Slack, and Jira context around it — with a five-whys root-cause analysis.
+  Triggers: "write sop", "write runbook", "sop for incident", "postmortem sop",
+            "serro sop".
+  Does: Gathers incident context from Serro -> runs a five-whys root cause -> drafts a
+        structured SOP to a local artifact -> pauses for human approval -> optionally
+        publishes it to Confluence.
+  NOT for: Non-incident documentation, or publishing anything without a human in the loop.
+
+  Requires the Serro MCP server registered user-scoped:
+    claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp
+  The only write (the Confluence publish) is behind an approval gate; nothing is
+  published unless a human approves it.
+
+worktree:
+  enabled: false
+mutates_checkout: false
+
+nodes:
+  # ---------------------------------------------------------------------------
+  # 1. Gather. The only read node that talks to Serro. Tools come from the
+  #    user-scoped `serro` server, so there is no per-repo mcp config to install
+  #    and this runs unchanged from any project.
+  # ---------------------------------------------------------------------------
+  - id: gather-incident
+    description: Pull the meeting, Slack and Jira context around the incident
+    model: medium
+    allowed_tools: []          # empty = allow every tool, including mcp__serro__*
+    prompt: |
+      Gather everything needed to write an SOP. Perform READS ONLY in this node —
+      nothing is published until a human has approved the draft.
+
+      Start by confirming Serro is reachable: list your tools and look for ones
+      named `mcp__serro__*`. If there are none, or your first call fails with an
+      auth error, set `serro_available` to "false", put the exact error in `notes`,
+      return empty values, and stop. Never fill the gap with a plausible-looking
+      timeline — an SOP that invents its own incident is actively dangerous, since
+      the whole point is that someone follows it under pressure.
+
+      Otherwise call `mcp__serro__whoami` once to establish who this run is acting
+      as. The organization is whatever that identity belongs to; do not pass an
+      organization id that you were not handed by the server.
+
+      Incident reference (meeting title, Slack thread, Jira key, or free description):
+        $ARGUMENTS
+
+      Gather, using whichever tools actually exist in your tool list rather than
+      assuming names:
+        - the meeting discussion of the incident
+        - the Slack thread where it was reported and resolved
+        - the tracking Jira issue and its status
+        - the program it belongs to, and that program's decisions and activity
+
+      Where a source genuinely returns nothing, use an empty value and record that
+      in `notes`, so the SOP's author can tell "nothing was said" apart from "the
+      lookup failed".
+    output_format:
+      type: object
+      properties:
+        serro_available:
+          type: string
+          enum: ['true', 'false']
+        incident_title: { type: string }
+        symptoms: { type: string }
+        timeline: { type: array, items: { type: string } }
+        contributing_facts: { type: array, items: { type: string } }
+        resolution_so_far: { type: string }
+        source_refs: { type: array, items: { type: string } }
+        notes: { type: string }
+      required: [serro_available, incident_title, symptoms, timeline, contributing_facts, resolution_so_far, source_refs, notes]
+
+  # ---------------------------------------------------------------------------
+  # 2. Guard. Deterministic. Without it an unreachable Serro produces an SOP with
+  #    an empty timeline, which still looks like an SOP and can still get
+  #    published.
+  # ---------------------------------------------------------------------------
+  - id: guard
+    description: Fail the run when Serro was unreachable, rather than drafting a hollow SOP
+    depends_on: [gather-incident]
+    bash: |
+      AVAILABLE=$gather-incident.output.serro_available
+      NOTES=$gather-incident.output.notes
+      if [ "$AVAILABLE" != "true" ]; then
+        echo "SERRO GUARD: Serro MCP was not reachable." >&2
+        echo "  Detail: $NOTES" >&2
+        echo "  Fix: claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp" >&2
+        echo "       claude mcp login serro" >&2
+        echo "  Note: a Serro connector added in the claude.ai UI is NOT visible to headless Archon runs." >&2
+        exit 1
+      fi
+      echo "Serro reachable."
+
+  # ---------------------------------------------------------------------------
+  # 3. Draft. Local artifact only — no Serro access, nothing published yet.
+  # ---------------------------------------------------------------------------
+  - id: draft-sop
+    description: Write the five-whys SOP to a local artifact
+    depends_on: [guard]
+    model: medium
+    allowed_tools: [Write]
+    prompt: |
+      Write a technical SOP / runbook from this incident context. Structure it as:
+      1. Summary (2-3 lines)
+      2. Impact & scope
+      3. Timeline
+      4. Root cause — five whys (Why 1 -> ... -> Why 5, ending at the true root cause)
+      5. Resolution (what fixed it)
+      6. Prevention (guardrails / follow-ups)
+      7. Runbook — numbered, copy-pasteable steps to detect and resolve a recurrence
+
+      Incident title: $gather-incident.output.incident_title
+      Symptoms: $gather-incident.output.symptoms
+      Timeline: $gather-incident.output.timeline
+      Contributing facts: $gather-incident.output.contributing_facts
+      Resolution so far: $gather-incident.output.resolution_so_far
+      Sources: $gather-incident.output.source_refs
+      Collection notes: $gather-incident.output.notes
+
+      If the notes record that a source came back empty, mark the affected section
+      as incomplete rather than inferring what probably happened.
+
+      Save the SOP to $ARTIFACTS_DIR/sop.md and print it.
+
+  # ---------------------------------------------------------------------------
+  # 4. Human gate. The single point where this workflow stops being read-only.
+  # ---------------------------------------------------------------------------
+  - id: approve-publish
+    depends_on: [draft-sop]
+    approval:
+      message: |
+        Review the SOP above ($ARTIFACTS_DIR/sop.md). Approve to publish it to
+        Confluence as the identity this run is acting as. Reject to keep it
+        local-only.
+      capture_response: true
+
+  # ---------------------------------------------------------------------------
+  # 5. Publish. The only write in the workflow, and it runs only on approval.
+  # ---------------------------------------------------------------------------
+  - id: publish
+    description: Publish the approved SOP to Confluence
+    depends_on: [approve-publish]
+    model: medium
+    allowed_tools: []          # empty = allow every tool, including mcp__serro__*
+    prompt: |
+      Reviewer decision: $approve-publish.output
+
+      If (and only if) the reviewer approved, publish the SOP from $ARTIFACTS_DIR/sop.md
+      to Confluence. If the reviewer did NOT approve, do nothing and report that
+      publishing was skipped.
+
+      You act as whatever identity `mcp__serro__whoami` reports, and you publish
+      into that identity's own workspace. Do not pass an organization id that you
+      were not handed by the server, and if a tool would write outside that
+      identity's scope, STOP and report rather than proceeding.
+
+      List the available Confluence spaces to pick the destination, then create or
+      update the page. If the SOP belongs to a program, link the document to it —
+      resolving the program in this order, and skipping the link rather than
+      guessing if none of them resolves:
+        1. a program name or id in the run message
+        2. the SERRO_PROGRAM environment variable (read it with
+           `printenv SERRO_PROGRAM`)
+        3. the current repository's name matched against each program's linked
+           repositories via `mcp__serro__list_programs`
+
+      Report the resulting page URL. If no Confluence write tool is available, say
+      so and report that the SOP remains at $ARTIFACTS_DIR/sop.md.

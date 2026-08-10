@@ -1,0 +1,150 @@
+name: serro-effort-analysis
+description: |
+  Use when: You want an engineering-effort analysis for a time window — where effort went,
+  broken down into NC / KTLO / IP / QI, per engineer and per workstream.
+  Triggers: "effort analysis", "engineering effort", "where did effort go", "NC KTLO IP QI",
+            "serro effort".
+  Does: Pulls Jira activity, repo activity, code history, and the work-mix CSV from
+        Serro -> classifies effort into NC/KTLO/IP/QI -> builds a per-engineer /
+        per-workstream breakdown -> writes a report.
+  NOT for: Any writes to Serro (this workflow is read-only), or forecasting.
+
+  Requires the Serro MCP server registered user-scoped:
+    claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp
+  Read-only: every Serro call is a read, and the run writes only into its own
+  artifacts directory.
+
+worktree:
+  enabled: false
+mutates_checkout: false
+
+nodes:
+  # ---------------------------------------------------------------------------
+  # 1. Gather. The only node that talks to Serro. Tools come from the user-scoped
+  #    `serro` server, so there is no per-repo mcp config to install and this runs
+  #    unchanged from any project.
+  # ---------------------------------------------------------------------------
+  - id: gather-effort
+    description: Pull the raw effort signals for the window from Serro
+    model: medium
+    allowed_tools: []          # empty = allow every tool, including mcp__serro__*
+    prompt: |
+      Gather the raw effort signals for an analysis window from Serro. READ ONLY —
+      this workflow never writes to Serro.
+
+      Start by confirming Serro is reachable: list your tools and look for ones
+      named `mcp__serro__*`. If there are none, or your first call fails with an
+      auth error, set `serro_available` to "false", put the exact error in `notes`,
+      return empty arrays, and stop. Never fill the gap with plausible-looking
+      activity — an effort split computed from invented tickets is worse than none.
+
+      Otherwise call `mcp__serro__whoami` once to establish who this run is acting
+      as. The organization is whatever that identity belongs to; do not pass an
+      organization id that you were not handed by the server.
+
+      Analysis window and any scope (team/repo/program):
+        $ARGUMENTS
+
+      Where the analysis is scoped to a program, resolve it in this order:
+        1. a program name or id in the arguments above
+        2. the SERRO_PROGRAM environment variable (read it with
+           `printenv SERRO_PROGRAM`)
+        3. the current repository's name matched against each program's linked
+           repositories via `mcp__serro__list_programs`
+      Use the first step that resolves; never assume a program that none of them
+      named. If none resolve, analyse the whole window for the identity and record
+      in `notes` that the analysis is unscoped.
+
+      Gather effort signals for the window, using whichever tools actually exist in
+      your tool list rather than assuming names:
+        - Jira issues worked, with type (bug/story/task), assignee and status changes
+        - PRs and commits, by author
+        - code churn / areas of change per author where available
+        - a work-mix CSV, if one is available, for its NC/KTLO/IP/QI distribution
+        - programs and their activity, to map work to workstreams
+
+      Where a source genuinely returns nothing, use an empty array and record that
+      in `notes`, so the reader can tell "no activity" apart from "the lookup
+      failed".
+    output_format:
+      type: object
+      properties:
+        serro_available:
+          type: string
+          enum: ['true', 'false']
+        window: { type: string }
+        jira_items:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              type: { type: string }
+              assignee: { type: string }
+              summary: { type: string }
+        repo_activity:
+          type: array
+          items:
+            type: object
+            properties:
+              author: { type: string }
+              prs: { type: string }
+              area: { type: string }
+        work_mix: { type: string }
+        notes:
+          type: string
+      required: [serro_available, window, jira_items, repo_activity, work_mix, notes]
+
+  # ---------------------------------------------------------------------------
+  # 2. Guard. Deterministic. Without it an unreachable Serro merely produces an
+  #    analysis of zero tickets, which renders as a confident-looking 0% split.
+  # ---------------------------------------------------------------------------
+  - id: guard
+    description: Fail the run when Serro was unreachable, rather than analysing nothing
+    depends_on: [gather-effort]
+    bash: |
+      AVAILABLE=$gather-effort.output.serro_available
+      NOTES=$gather-effort.output.notes
+      if [ "$AVAILABLE" != "true" ]; then
+        echo "SERRO GUARD: Serro MCP was not reachable." >&2
+        echo "  Detail: $NOTES" >&2
+        echo "  Fix: claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp" >&2
+        echo "       claude mcp login serro" >&2
+        echo "  Note: a Serro connector added in the claude.ai UI is NOT visible to headless Archon runs." >&2
+        exit 1
+      fi
+      echo "Serro reachable."
+
+  # ---------------------------------------------------------------------------
+  # 3. Classify. All the judgement lives here: raw signals -> NC/KTLO/IP/QI.
+  #    No Serro access and no writes.
+  # ---------------------------------------------------------------------------
+  - id: analyze-effort
+    description: Classify the signals and write the effort report
+    depends_on: [guard]
+    model: medium
+    allowed_tools: [Write]
+    prompt: |
+      Produce an engineering-effort analysis. Classify each unit of work into one of:
+      - NC  (New capabilities — feature/delivery)
+      - KTLO (Keep-the-lights-on — incidents, bug fixes, ops maintenance)
+      - IP  (Internal productivity — planning, spikes, tooling, dev-experience)
+      - QI  (Quality improvement — hardening, tech-debt, reliability)
+
+      Deliver:
+      1. Overall NC/KTLO/IP/QI split (percentages) for the window
+      2. Per-engineer breakdown (approx person-days or share, with your basis stated)
+      3. Per-workstream/program breakdown
+      4. Notable shifts and 2-3 observations a program lead would act on
+      5. Data-confidence note — what was inferred vs directly sourced
+
+      Window: $gather-effort.output.window
+      Jira items: $gather-effort.output.jira_items
+      Repo activity: $gather-effort.output.repo_activity
+      Work-mix CSV: $gather-effort.output.work_mix
+      Collection notes: $gather-effort.output.notes
+
+      If the notes record that a source came back empty, fold that into the
+      data-confidence note rather than reporting a percentage you cannot support.
+
+      Save the report to $ARTIFACTS_DIR/effort-analysis.md and print it.

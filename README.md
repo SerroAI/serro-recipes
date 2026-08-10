@@ -159,6 +159,9 @@ guess.
 | `serro-design-pr-review` | Reviews a PR against a design source of truth (`design.md` or a Serro-linked design doc) plus the program's design decisions. | Report artifact |
 | `serro-context-pack` | Compiles program context into a committed `SERRO-CONTEXT.md` + a Claude skill, so **any** agent (Claude Code, Codex, Codepress) inherits the context without Archon. | Repo file + skill |
 | `serro-daily-brief` | One digest of what is on today — meetings, Jira movement, program flags — scoped to your identity rather than a program. Fails rather than emitting an empty brief when Serro is unreachable. | Report artifact |
+| `serro-digest-builder` | The weekly, program-scoped counterpart: seven days of meetings, Jira movement, Slack discussion and open risks, condensed. | Report artifact |
+| `serro-effort-analysis` | Splits a window of engineering effort into NC / KTLO / IP / QI, per engineer and per workstream, with an explicit data-confidence note. | Report artifact |
+| `serro-sop-writer` | Reconstructs an incident from meeting, Slack and Jira context, runs a five-whys root cause, and drafts a runbook. Confluence publish is behind an approval gate. | Report artifact, and a Confluence page **only if you approve** |
 
 Every one of them is **read-only against your codebase**. They write reports
 into Archon's per-run artifacts directory. `serro-context-pack` is the single
@@ -175,8 +178,13 @@ exception and writes exactly one file, `SERRO-CONTEXT.md`, at the repo root.
 
 Skills read; they do not write. None of them post anywhere or modify your code.
 
-None of the recipes here post to GitHub, Slack, Linear, or Serro. Nothing in this
-repo has write access to your systems.
+None of the recipes here post to GitHub, Slack, Linear, or Serro.
+
+The one recipe that writes outside your machine at all is `serro-sop-writer`,
+which can publish a finished SOP to Confluence — and only after an explicit
+approval node, as the identity `mcp__serro__whoami` reports, into that identity's
+own workspace. Decline the gate and it publishes nothing. Everything else here
+reads.
 
 ---
 
