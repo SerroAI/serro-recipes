@@ -5,7 +5,7 @@
     "author": "SerroAI",
     "description": "Judge a PR against what the program already knows: open risks, committed customer requirements, recorded decisions and open action items. Not a style review — a \"does this land safely in this program\" review.",
     "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-pr-readiness",
-    "sha": "e23217e37116b533daa698db2ae061751f5bb45b",
+    "sha": "1539634466008d92cf2d5dafd13f87752acb3826",
     "tags": [
       "review",
       "development"
@@ -19,7 +19,7 @@
     "author": "SerroAI",
     "description": "Program-level go/no-go. Surfaces committed-but-unshipped customer requirements, unresolved risks, release-gating action items and contradicted decisions, with an explicit list of what could not be checked.",
     "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-release-readiness",
-    "sha": "e23217e37116b533daa698db2ae061751f5bb45b",
+    "sha": "1539634466008d92cf2d5dafd13f87752acb3826",
     "tags": [
       "automation",
       "planning"
@@ -33,7 +33,7 @@
     "author": "SerroAI",
     "description": "Review a PR against the design source of truth — a design.md, a PRD, or a Serro-linked design doc — plus the program's recorded design decisions. Reports contradictions, decision reversals, silent extensions and stale design.",
     "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-design-pr-review",
-    "sha": "e23217e37116b533daa698db2ae061751f5bb45b",
+    "sha": "1539634466008d92cf2d5dafd13f87752acb3826",
     "tags": [
       "review",
       "development"
@@ -47,7 +47,7 @@
     "author": "SerroAI",
     "description": "Compile the program's live context into a committed SERRO-CONTEXT.md, so any agent — Claude Code, Codex, Cursor, Codepress — inherits it as ordinary repository context. Ships the serro-context skill alongside it.",
     "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-context-pack",
-    "sha": "e23217e37116b533daa698db2ae061751f5bb45b",
+    "sha": "1539634466008d92cf2d5dafd13f87752acb3826",
     "tags": [
       "automation",
       "planning"
@@ -60,10 +60,49 @@
     "author": "SerroAI",
     "description": "Pull today's meetings, recent Jira movement and open decisions from Serro and synthesise them into a short, skimmable brief. When Serro is unreachable it reports the error and returns nothing rather than filling the gap — an empty brief beats an invented one.",
     "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-daily-brief",
-    "sha": "e23217e37116b533daa698db2ae061751f5bb45b",
+    "sha": "1539634466008d92cf2d5dafd13f87752acb3826",
     "tags": [
       "automation",
       "reporting"
+    ],
+    "archonVersionCompat": ">=0.6.0"
+  },
+  {
+    "slug": "serro-digest-builder",
+    "name": "Digest Builder",
+    "author": "SerroAI",
+    "description": "Pull a week of program activity from Serro — meetings, Jira movement, Slack discussion, open risks and decisions — and synthesise a skimmable digest. The weekly, program-scoped counterpart to Daily Brief.",
+    "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-digest-builder",
+    "sha": "1539634466008d92cf2d5dafd13f87752acb3826",
+    "tags": [
+      "automation",
+      "reporting"
+    ],
+    "archonVersionCompat": ">=0.6.0"
+  },
+  {
+    "slug": "serro-effort-analysis",
+    "name": "Effort Analysis",
+    "author": "SerroAI",
+    "description": "Classify a time window of engineering effort into new capability, keep-the-lights-on, internal platform and quality investment, broken down per engineer and per workstream. Reads Jira activity, repo activity, code history and the work-mix data from Serro.",
+    "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-effort-analysis",
+    "sha": "1539634466008d92cf2d5dafd13f87752acb3826",
+    "tags": [
+      "planning",
+      "reporting"
+    ],
+    "archonVersionCompat": ">=0.6.0"
+  },
+  {
+    "slug": "serro-sop-writer",
+    "name": "SOP Writer",
+    "author": "SerroAI",
+    "description": "Gather the meeting, Slack and Jira context around an incident from Serro, run a five-whys root-cause analysis, and draft a structured SOP. Publishing to Confluence sits behind an explicit approval gate.",
+    "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-sop-writer",
+    "sha": "1539634466008d92cf2d5dafd13f87752acb3826",
+    "tags": [
+      "automation",
+      "incident"
     ],
     "archonVersionCompat": ">=0.6.0"
   }
