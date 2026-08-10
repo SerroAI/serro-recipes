@@ -44,9 +44,10 @@ The run opens by snapshotting the working tree and closes by asserting the tree
 is identical, via `scripts/capture-diff.sh` and `scripts/assert-diff-unchanged.sh`
 in this bundle. If the audit modified anything, the final node fails and says so.
 
-The snapshot records `git status --porcelain` as well as the diff, because a diff
-alone ignores untracked files — an agent that created a file would otherwise pass
-an unchanged-diff check.
+The snapshot covers untracked files by diffing each one against `/dev/null`, not
+just listing them. A plain `git diff` ignores untracked files entirely, so an
+agent that created one would pass an unchanged-diff check; recording only their
+names would still miss an agent that rewrote one it had created.
 
 It also runs in a worktree (`worktree.enabled: true`), so the agent reads an
 isolated checkout rather than your live one.

@@ -3,22 +3,31 @@
 # Snapshot the working tree so assert-diff-unchanged.sh can prove this run
 # changed nothing.
 #
-# Records `git status --porcelain` alongside the diff on purpose: `git diff`
-# alone ignores untracked files, so an agent that CREATED a file would sail
-# through an unchanged-diff check. $ARTIFACTS_DIR is external to the checkout,
-# so the snapshot never appears in the status it is recording.
-set -uo pipefail
+# Untracked files are diffed against /dev/null rather than merely listed, so a
+# file the agent CREATED is captured by content and not just by name.
+# $ARTIFACTS_DIR is external to the checkout, so the snapshot never turns up in
+# the status it is recording.
+set -euo pipefail
 
-OUT="${1:?usage: capture-diff.sh <output-file>}"
-mkdir -p "$(dirname "$OUT")"
+output="${1:-${ARTIFACTS_DIR}/starting-state.diff}"
+
+# Archon substitutes BASE_BRANCH into bash nodes, but a recipe installed by a
+# stranger should degrade rather than hard-fail under `set -u` if it is absent.
+# Both captures in a run use the same baseline, so the comparison holds either way.
+base="${BASE_BRANCH:-HEAD}"
 
 {
-  echo "# status"
-  git status --porcelain
-  echo "# diff"
-  # `git diff HEAD` covers staged and unstaged; it fails in a repo with no
-  # commits yet, where plain `git diff` is the best available baseline.
-  git diff HEAD 2>/dev/null || git diff
-} >"$OUT"
+  echo "# Git status"
+  git status --short
+  echo
+  echo "# Tracked changes from ${base}"
+  git diff "$base" -- .
 
-echo "captured $(wc -l <"$OUT" | tr -d ' ') line(s) to $OUT"
+  while IFS= read -r file; do
+    echo
+    echo "# Untracked file: $file"
+    git diff --no-index -- /dev/null "$file" || true
+  done < <(git ls-files --others --exclude-standard)
+} >"$output"
+
+wc -c "$output"

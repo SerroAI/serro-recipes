@@ -3,27 +3,30 @@
 # Fail the run if the working tree diverged from the snapshot capture-diff.sh
 # took. This is what makes "read-only" an assertion the workflow enforces rather
 # than an instruction the prompt hopes the agent followed.
-set -uo pipefail
+set -euo pipefail
 
-BASE="${1:?usage: assert-diff-unchanged.sh <snapshot-file>}"
+expected="${1:-${ARTIFACTS_DIR}/starting-state.diff}"
 
-if [ ! -f "$BASE" ]; then
-  echo "READ-ONLY ASSERTION: no snapshot at $BASE, so nothing can be proven." >&2
+if [[ ! -f "$expected" ]]; then
+  echo "READ-ONLY ASSERTION: no snapshot at $expected, so nothing can be proven." >&2
   exit 1
 fi
 
-NOW="$(mktemp)"
-trap 'rm -f "$NOW"' EXIT
+actual="$(mktemp)"
+trap 'rm -f "$actual"' EXIT
 
-# Re-capture with the same script so the two snapshots are directly comparable.
-bash "$(dirname "$0")/capture-diff.sh" "$NOW" >/dev/null
+# Re-capture with the sibling script so both snapshots are directly comparable.
+# Resolved relative to this file rather than the cwd, so the assertion survives a
+# node that runs from a subdirectory.
+bash "$(dirname "$0")/capture-diff.sh" "$actual" >/dev/null
 
-if diff -q "$BASE" "$NOW" >/dev/null 2>&1; then
-  echo "unchanged — checkout is identical to the starting snapshot"
-  exit 0
+if ! cmp -s "$expected" "$actual"; then
+  echo "READ-ONLY ASSERTION FAILED: the checkout changed during the audit." >&2
+  echo "Current git status:" >&2
+  git status --short >&2
+  echo "Difference from the starting snapshot:" >&2
+  diff -u "$expected" "$actual" >&2 || true
+  exit 1
 fi
 
-echo "READ-ONLY ASSERTION FAILED: the checkout changed during the audit." >&2
-echo "--- starting state vs. now ---" >&2
-diff "$BASE" "$NOW" >&2
-exit 1
+echo "unchanged"
