@@ -4,7 +4,7 @@ Incident Response runs the whole incident loop in one go. It characterises the
 issue from Serro context, proposes a fix, drafts a five-whys SOP, then asks for
 one approval that covers three writes.
 
-**This is the only workflow in the set that writes outside the run.** On approval
+**This is the only workflow in the set that can push code.** On approval
 it files an issue in Serro, publishes the SOP to Confluence and, if you gave it a
 repo path, pushes a branch and opens a draft PR. Read the gate before you approve.
 

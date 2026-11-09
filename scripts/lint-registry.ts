@@ -60,6 +60,9 @@ interface Entry {
   outputs?: string[];
   verdicts?: { value: string; meaning: string }[];
   addedAt?: string;
+  runsInChat?: unknown;
+  chatCaveat?: unknown;
+  triggersOn?: unknown;
 }
 
 const INTEGRATIONS = [
@@ -189,6 +192,20 @@ for (const e of entries) {
   if (e.verdicts !== undefined && !(Array.isArray(e.verdicts) && e.verdicts.every(v => v.value && v.meaning))) {
     fail(`${p} verdicts must be [{ value, meaning }]`);
   }
+  if (e.runsInChat !== undefined && typeof e.runsInChat !== 'boolean') {
+    // The MCP reads this with bool(), so the string "false" would mean true.
+    fail(`${p} runsInChat must be true or false`);
+  }
+  if (e.chatCaveat !== undefined) {
+    if (typeof e.chatCaveat !== 'string' || !e.chatCaveat.trim()) {
+      fail(`${p} chatCaveat must be a non-empty string`);
+    } else if (e.runsInChat !== true) {
+      fail(`${p} chatCaveat only applies when runsInChat is true`);
+    }
+  }
+  if (e.triggersOn !== undefined && (typeof e.triggersOn !== 'string' || !e.triggersOn.trim())) {
+    fail(`${p} triggersOn must be a non-empty string`);
+  }
   if (e.addedAt !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(e.addedAt)) {
     fail(`${p} addedAt must be YYYY-MM-DD`);
   }
@@ -311,13 +328,19 @@ if (withNetwork) {
         return;
       }
       const [, owner, repo, path] = m;
-      const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${e.sha}`;
-      try {
-        const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
-        if (!res.ok) fail(`[${e.slug}] not found at pinned SHA (HTTP ${String(res.status)}): ${url}`);
-        else console.log(`  ✓ [${e.slug}] verified at ${e.sha.slice(0, 8)}`);
-      } catch (error) {
-        fail(`[${e.slug}] fetch failed: ${(error as Error).message}`);
+      // A skill edition is fetched from skills/<slug>/ at the same pin, so it has to
+      // exist there too — the pin usually predates the commit that added it.
+      const paths = e.agentSkill ? [path, `skills/${e.slug}/SKILL.md`] : [path];
+      for (const p of paths) {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${p}?ref=${e.sha}`;
+        try {
+          const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
+          if (!res.ok) {
+            fail(`[${e.slug}] ${p} not found at pinned SHA (HTTP ${String(res.status)}) — run: bun scripts/pin-sha.ts`);
+          } else console.log(`  ✓ [${e.slug}] ${p} verified at ${e.sha.slice(0, 8)}`);
+        } catch (error) {
+          fail(`[${e.slug}] fetch failed: ${(error as Error).message}`);
+        }
       }
     })
   );

@@ -58,7 +58,5 @@ _Illustrative example for a fictional program. A real run uses your own program'
 **Program flags**
 - RISK-12 "Duplicate charges on retry" is still open and is touched by CHK-231.
 
-Slack and decisions: no source data came back for these today.
-
 **Focus for today:** get CHK-231 reviewed before the Northwind prep call.
 ```

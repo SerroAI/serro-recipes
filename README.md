@@ -257,7 +257,10 @@ V1 publishing is a pull request.
    "Related guides" (the page renders those). To ship a workflow without
    Archon too, add `skills/<slug>/SKILL.md` and an `agentSkill: { "invoke": "…" }`
    field, and list the runtimes it reaches in `targets`.
-5. Pin it: `bun scripts/pin-sha.ts` after your commit lands on `main`.
+5. Pin it: `bun scripts/pin-sha.ts` after your commit lands on `main`, then
+   `bun scripts/lint-registry.ts --network`. Until the pin moves, a new Agent
+   Skill edition does not exist at the pinned commit: the Serro MCP falls back to
+   the Archon bundle for it, and consumers should not sync that catalog yet.
 6. Regenerate and validate:
    `bun scripts/build-registry.ts && bun scripts/lint-registry.ts`.
 
