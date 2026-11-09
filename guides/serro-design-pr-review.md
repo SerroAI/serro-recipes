@@ -8,10 +8,10 @@ document speaks to them.
 The design comes from two places:
 
 - **The repo.** Tracked Markdown files whose names start with `design`,
-  `architecture`, `spec`, `prd` or `rfc`, or that have `design`, `spec`, `prd`
-  or `rfc` anywhere in a path under `docs/` (so `docs/design/overview.md` counts
-  but `docs/system-architecture.md` does not), found with `git ls-files` so build
-  output is never scanned. Only the
+  `architecture`, `spec`, `prd` or `rfc`, or files under `docs/` whose name
+  contains `design`, `spec`, `prd` or `rfc` (so `docs/payments-design.md` counts,
+  but `docs/design/overview.md` and `docs/system-architecture.md` do not), found
+  with `git ls-files` so build output is never scanned. Only the
   first 40 matches are read, so pass the path of a design file named any other
   way.
 - **Serro.** Linked program documents, the program objective and the decision
