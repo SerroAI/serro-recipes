@@ -52,7 +52,33 @@ interface Entry {
   targets: string[];
   archonVersionCompat?: string;
   featured?: boolean;
+  agentSkill?: { invoke?: string };
+  tagline?: string;
+  requiresIntegrations?: string[];
+  requires?: string[];
+  writes?: string;
+  outputs?: string[];
+  verdicts?: { value: string; meaning: string }[];
+  addedAt?: string;
+  runsInChat?: unknown;
+  chatCaveat?: unknown;
+  triggersOn?: unknown;
 }
+
+const INTEGRATIONS = [
+  'serro',
+  'github',
+  'linear',
+  'jira',
+  'slack',
+  'confluence',
+  'notion',
+  'google-drive',
+  'gitlab',
+] as const;
+
+/** Headings a guide must not use: the guide page renders these itself. */
+const RESERVED_GUIDE_HEADINGS = /^## (Set up|Details|Related guides)\s*$/m;
 
 let errors = 0;
 let warnings = 0;
@@ -144,6 +170,90 @@ for (const e of entries) {
   }
 }
 
+// Presentation fields: the gallery, public guides and the MCP all render these.
+console.log('\nChecking presentation fields...');
+const nonEmptyStrings = (v: unknown) =>
+  Array.isArray(v) && v.length > 0 && v.every(x => typeof x === 'string' && x.trim());
+for (const e of entries) {
+  const p = `[${e.slug}]`;
+  if (!e.tagline?.trim()) fail(`${p} tagline is required`);
+  if (!e.writes?.trim()) fail(`${p} writes is required — say plainly what installing it writes`);
+  if (!nonEmptyStrings(e.requires)) fail(`${p} requires must be a non-empty string array`);
+  if (!nonEmptyStrings(e.outputs)) fail(`${p} outputs must be a non-empty string array`);
+  if (!nonEmptyStrings(e.requiresIntegrations)) {
+    fail(`${p} requiresIntegrations must be a non-empty string array`);
+  } else {
+    for (const id of e.requiresIntegrations!) {
+      if (!INTEGRATIONS.includes(id as (typeof INTEGRATIONS)[number])) {
+        fail(`${p} unknown integration '${id}' — expected one of: ${INTEGRATIONS.join(', ')}`);
+      }
+    }
+  }
+  if (e.verdicts !== undefined && !(Array.isArray(e.verdicts) && e.verdicts.every(v => v.value && v.meaning))) {
+    fail(`${p} verdicts must be [{ value, meaning }]`);
+  }
+  if (e.runsInChat !== undefined && typeof e.runsInChat !== 'boolean') {
+    // The MCP reads this with bool(), so the string "false" would mean true.
+    fail(`${p} runsInChat must be true or false`);
+  }
+  if (e.chatCaveat !== undefined) {
+    if (typeof e.chatCaveat !== 'string' || !e.chatCaveat.trim()) {
+      fail(`${p} chatCaveat must be a non-empty string`);
+    } else if (e.runsInChat !== true) {
+      fail(`${p} chatCaveat only applies when runsInChat is true`);
+    }
+  }
+  if (e.triggersOn !== undefined && (typeof e.triggersOn !== 'string' || !e.triggersOn.trim())) {
+    fail(`${p} triggersOn must be a non-empty string`);
+  }
+  if (e.addedAt !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(e.addedAt)) {
+    fail(`${p} addedAt must be YYYY-MM-DD`);
+  }
+}
+
+// An agent-skill edition lets a workflow run without Archon. It shares the slug,
+// so it lives at skills/<slug>/ beside the plain skills.
+console.log('\nChecking agent-skill editions...');
+for (const e of entries.filter(x => x.agentSkill !== undefined)) {
+  const p = `[${e.slug}]`;
+  if (e.kind !== 'archon-workflow') fail(`${p} agentSkill is only for archon-workflow entries`);
+  if (!e.agentSkill?.invoke?.trim()) fail(`${p} agentSkill.invoke is required — what to say to the agent`);
+  if (!e.targets?.some(t => t !== 'archon')) {
+    fail(`${p} agentSkill is set but targets lists only archon — add the runtimes it reaches`);
+  }
+  if (!existsSync(join(ROOT, 'skills', e.slug, 'SKILL.md'))) {
+    fail(`${p} agentSkill is set but skills/${e.slug}/SKILL.md is missing`);
+  }
+}
+for (const e of entries.filter(x => x.kind === 'archon-workflow' && !x.agentSkill)) {
+  if (e.targets?.some(t => t !== 'archon')) {
+    fail(`[${e.slug}] lists non-Archon targets but has no agentSkill edition to run there`);
+  }
+}
+
+// Guides are optional, but each must belong to an entry and leave the page's own
+// headings alone.
+console.log('\nChecking guides...');
+const guideDir = join(ROOT, 'guides');
+const slugs = new Set(entries.map(e => e.slug));
+if (existsSync(guideDir)) {
+  for (const file of readdirSync(guideDir).filter(f => f.endsWith('.md'))) {
+    const slug = file.slice(0, -3);
+    if (!slugs.has(slug)) {
+      fail(`guides/${file} has no catalog entry`);
+      continue;
+    }
+    const prose = readFileSync(join(guideDir, file), 'utf8').replace(/```[\s\S]*?```/g, '');
+    if (/^# /m.test(prose)) fail(`guides/${file} uses a '# ' heading — the page already has the title`);
+    if (RESERVED_GUIDE_HEADINGS.test(prose)) {
+      fail(`guides/${file} uses a heading the guide page renders itself (Set up, Details, Related guides)`);
+    }
+  }
+}
+for (const e of entries) {
+  if (!existsSync(join(guideDir, `${e.slug}.md`))) warn(`[${e.slug}] has no guides/${e.slug}.md`);
+}
+
 // Directories on disk that nobody can install because they are absent from the catalog.
 for (const kind of KINDS) {
   const { dir } = LAYOUT[kind];
@@ -158,7 +268,7 @@ for (const kind of KINDS) {
 
 // Skills carry frontmatter that decides whether a runtime ever triggers them.
 console.log('\nChecking skill frontmatter...');
-for (const e of entries.filter(x => x.kind === 'agent-skill')) {
+for (const e of entries.filter(x => x.kind === 'agent-skill' || x.agentSkill)) {
   const file = join(ROOT, 'skills', e.slug, 'SKILL.md');
   if (!existsSync(file)) continue;
   const head = readFileSync(file, 'utf8').slice(0, 2000);
@@ -218,13 +328,19 @@ if (withNetwork) {
         return;
       }
       const [, owner, repo, path] = m;
-      const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${e.sha}`;
-      try {
-        const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
-        if (!res.ok) fail(`[${e.slug}] not found at pinned SHA (HTTP ${String(res.status)}): ${url}`);
-        else console.log(`  ✓ [${e.slug}] verified at ${e.sha.slice(0, 8)}`);
-      } catch (error) {
-        fail(`[${e.slug}] fetch failed: ${(error as Error).message}`);
+      // A skill edition is fetched from skills/<slug>/ at the same pin, so it has to
+      // exist there too — the pin usually predates the commit that added it.
+      const paths = e.agentSkill ? [path, `skills/${e.slug}/SKILL.md`] : [path];
+      for (const p of paths) {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${p}?ref=${e.sha}`;
+        try {
+          const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
+          if (!res.ok) {
+            fail(`[${e.slug}] ${p} not found at pinned SHA (HTTP ${String(res.status)}) — run: bun scripts/pin-sha.ts`);
+          } else console.log(`  ✓ [${e.slug}] ${p} verified at ${e.sha.slice(0, 8)}`);
+        } catch (error) {
+          fail(`[${e.slug}] fetch failed: ${(error as Error).message}`);
+        }
       }
     })
   );
