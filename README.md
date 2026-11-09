@@ -23,6 +23,14 @@ A workflow is something you *run*. A skill is something an agent *knows*. They
 share the context contract — both read program state through Serro MCP — and
 differ only in packaging.
 
+Some workflows also ship an **Agent Skill edition** at `skills/<slug>/SKILL.md`
+(marked `agentSkill` in `catalog.json`): the same review written as steps your
+agent follows itself, so Claude Code, Codex and Copilot can run it without
+Archon. Archon still gives the most consistent results, because it runs the
+steps as a fixed workflow; the skill edition reports what it could not check.
+Today that covers `serro-pr-readiness`, `serro-release-readiness` and
+`serro-design-pr-review`.
+
 ### A note on vocabulary
 
 We call them **recipes** because "workflow" already means several other things at
@@ -189,6 +197,18 @@ at the end.
 
 Skills read; they do not write. None of them post anywhere or modify your code.
 
+### Agent Skill editions of workflows
+
+| Skill edition | Same as | Say to your agent |
+|---|---|---|
+| `serro-pr-readiness` | the PR Readiness workflow | "Use serro-pr-readiness: is PR &lt;number&gt; ready to merge?" |
+| `serro-release-readiness` | the Release Readiness workflow | "Use serro-release-readiness: are we ready to ship &lt;program name&gt;?" |
+| `serro-design-pr-review` | the Design PR Review workflow | "Use serro-design-pr-review: does PR &lt;number&gt; still match the design?" |
+
+Install one like any skill (`npx skills add SerroAI/serro-recipes --skill <slug>`,
+or ask an agent with the Serro MCP to call `get_workflow` with your runtime as
+`target`). Like the workflows, they write nothing to your repo.
+
 Two recipes can write outside your machine. Both do it only after an explicit
 approval node, as the identity `mcp__serro__whoami` reports, into that identity's
 own workspace — and both publish nothing at all if you decline:
@@ -226,14 +246,33 @@ V1 publishing is a pull request.
    - skill → `skills/<slug>/SKILL.md` (frontmatter `name` **must** equal the slug)
 2. If a workflow needs the shared Serro context preamble, run
    `bun scripts/sync-shared.ts` to vendor `shared/` into your bundle.
-3. Add an entry to **`catalog.json`** — the canonical list — with its `kind` and
-   `targets`.
-4. Pin it: `bun scripts/pin-sha.ts` after your commit lands on `main`.
-5. Regenerate and validate:
+3. Add an entry to **`catalog.json`** — the canonical list — with its `kind`,
+   `targets` and the presentation fields every surface renders: `tagline`,
+   `requires`, `writes`, `outputs`, `requiresIntegrations`, and where they apply
+   `verdicts`, `triggersOn`, `runsInChat`/`chatCaveat` and `addedAt`.
+   `lint-registry.ts` checks them.
+4. Optionally write **`guides/<slug>.md`**, the long-form page shown on Serro's
+   public guides: how it reasons, how to run it, how to read the result, and an
+   example. Start at `##` headings and don't use "Set up", "Details" or
+   "Related guides" (the page renders those). To ship a workflow without
+   Archon too, add `skills/<slug>/SKILL.md` and an `agentSkill: { "invoke": "…" }`
+   field, and list the runtimes it reaches in `targets`.
+5. Pin it: `bun scripts/pin-sha.ts` after your commit lands on `main`.
+6. Regenerate and validate:
    `bun scripts/build-registry.ts && bun scripts/lint-registry.ts`.
 
 Slugs are `^[a-z0-9-]+$` (Archon enforces this) and a workflow's main YAML must be
 named `<slug>.yaml`.
+
+### Where this catalog is used
+
+`catalog.json` and `guides/` are the source of truth for every surface that shows
+a recipe:
+
+- **Serro's gallery and public guides** (btnextjs) copy them in with
+  `scripts/sync-recipes.ts` at a pinned commit. They are never edited there.
+- **The Serro MCP** (`list_workflows`, `get_workflow`) reads `catalog.json` live
+  from `main`, so a merged change reaches agents without a deploy.
 
 ### catalog.json vs workflows.json
 

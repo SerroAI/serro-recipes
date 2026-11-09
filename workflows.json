@@ -58,7 +58,7 @@
     "slug": "serro-daily-brief",
     "name": "Daily Brief",
     "author": "SerroAI",
-    "description": "Pull today's meetings, recent Jira movement and open decisions from Serro and synthesise them into a short, skimmable brief. When Serro is unreachable it reports the error and returns nothing rather than filling the gap — an empty brief beats an invented one.",
+    "description": "Pull today's meetings, Jira issues updated in the last 24 hours and anything the program is flagging from Serro, and synthesise them into a short, skimmable brief. When Serro is unreachable it reports the error and returns nothing rather than filling the gap — an empty brief beats an invented one.",
     "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-daily-brief",
     "sha": "5fb3a319be1790153177289c4f669394054c604a",
     "tags": [
@@ -71,7 +71,7 @@
     "slug": "serro-digest-builder",
     "name": "Digest Builder",
     "author": "SerroAI",
-    "description": "Pull a week of program activity from Serro — meetings, Jira movement, Slack discussion, open risks and decisions — and synthesise a skimmable digest. The weekly, program-scoped counterpart to Daily Brief.",
+    "description": "Pull a week of program activity from Serro — meetings, Jira movement, Slack discussion and open risks — and synthesise a skimmable digest. The weekly, program-scoped counterpart to Daily Brief.",
     "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-digest-builder",
     "sha": "5fb3a319be1790153177289c4f669394054c604a",
     "tags": [

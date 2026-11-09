@@ -13,8 +13,18 @@
     "              a skill in the agentskills.io layout is resolved by Archon, Codex and",
     "              Copilot, while Claude Code reads .claude/skills/. ChatGPT has no skill",
     "              install format at all, so it gets copy-paste or an MCP connector.",
+    "agentSkill — on an archon-workflow only: the repo also ships skills/<slug>/SKILL.md, an",
+    "              Agent Skill edition that Claude Code, Codex and Copilot run without Archon.",
+    "              `invoke` is an example of what to say to the agent. List those runtimes in targets.",
     "sha       — full 40-char commit pin. 40 zeros = not yet published; such entries are",
-    "              excluded from the generated registry because installing one would 404."
+    "              excluded from the generated registry because installing one would 404.",
+    "",
+    "This file is also the source of truth for every surface that shows a recipe:",
+    "the Serro gallery and public guides (btnextjs syncs it at a pinned commit) and the",
+    "Serro MCP's list_workflows/get_workflow (read live from main). Presentation fields",
+    "(tagline, requires, writes, outputs, verdicts, triggersOn, requiresIntegrations,",
+    "runsInChat, chatCaveat, addedAt) live here, not in those consumers.",
+    "Long-form guide pages live in guides/<slug>.md (optional, one per entry)."
   ],
   "entries": [
     {
@@ -22,178 +32,557 @@
       "kind": "archon-workflow",
       "name": "PR Readiness",
       "author": "SerroAI",
+      "tagline": "Is this PR safe to merge given everything the program already knows?",
       "description": "Judge a PR against what the program already knows: open risks, committed customer requirements, recorded decisions and open action items. Not a style review — a \"does this land safely in this program\" review.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-pr-readiness",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["review", "development"],
-      "targets": ["archon"],
+      "tags": [
+        "review",
+        "development"
+      ],
+      "targets": [
+        "archon",
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro",
+        "github"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": true
+      "agentSkill": {
+        "invoke": "Use serro-pr-readiness: is PR <number> ready to merge?"
+      },
+      "featured": true,
+      "addedAt": "2026-08-11",
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "A program that matches this repo (or named in the run message)",
+        "gh CLI for PR-number mode — otherwise it diffs the current branch"
+      ],
+      "writes": "Nothing in your repo. Report goes to the run artifacts directory.",
+      "outputs": [
+        "pr-readiness-report.md",
+        "serro-context.json",
+        "pr-diff.txt"
+      ],
+      "verdicts": [
+        {
+          "value": "ready",
+          "meaning": "No conflicts against context substantive enough to check"
+        },
+        {
+          "value": "ready_with_caveats",
+          "meaning": "Non-blocking findings, or the program context was too thin to judge"
+        },
+        {
+          "value": "not_ready",
+          "meaning": "Contradicts a committed requirement or recorded decision, or worsens an open high-severity risk"
+        }
+      ]
     },
     {
       "slug": "serro-release-readiness",
       "kind": "archon-workflow",
       "name": "Release Readiness",
       "author": "SerroAI",
+      "tagline": "Program-level go/no-go, backed by commitments rather than a green build.",
       "description": "Program-level go/no-go. Surfaces committed-but-unshipped customer requirements, unresolved risks, release-gating action items and contradicted decisions, with an explicit list of what could not be checked.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-release-readiness",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["automation", "planning"],
-      "targets": ["archon"],
+      "tags": [
+        "automation",
+        "planning"
+      ],
+      "targets": [
+        "archon",
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": true
+      "agentSkill": {
+        "invoke": "Use serro-release-readiness: are we ready to ship <program name>?"
+      },
+      "featured": true,
+      "addedAt": "2026-08-11",
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "A resolvable program",
+        "Git tags improve the scope section (falls back to the last 100 commits)"
+      ],
+      "writes": "Nothing in your repo. Report goes to the run artifacts directory.",
+      "outputs": [
+        "release-readiness.md",
+        "release-scope.txt",
+        "delivery-signals.md"
+      ],
+      "verdicts": [
+        {
+          "value": "go",
+          "meaning": "Nothing outstanding against substantive context"
+        },
+        {
+          "value": "go_with_risk",
+          "meaning": "No hard blockers, but named risks ship along"
+        },
+        {
+          "value": "no_go",
+          "meaning": "A committed requirement is unshipped, or an open high-severity risk is made worse"
+        }
+      ]
     },
     {
       "slug": "serro-design-pr-review",
       "kind": "archon-workflow",
       "name": "Design PR Review",
       "author": "SerroAI",
+      "tagline": "Does the implementation still match the design — and the decisions?",
       "description": "Review a PR against the design source of truth — a design.md, a PRD, or a Serro-linked design doc — plus the program's recorded design decisions. Reports contradictions, decision reversals, silent extensions and stale design.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-design-pr-review",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["review", "development"],
-      "targets": ["archon"],
+      "tags": [
+        "review",
+        "development"
+      ],
+      "targets": [
+        "archon",
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro",
+        "github"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": true
+      "agentSkill": {
+        "invoke": "Use serro-design-pr-review: does PR <number> still match the design?"
+      },
+      "featured": true,
+      "addedAt": "2026-08-11",
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "A design source: design.md / PRD in the repo, or a design doc linked to the program",
+        "gh CLI for PR-number mode"
+      ],
+      "writes": "Nothing in your repo — not even the design doc. Suggested doc edits are listed for a human.",
+      "outputs": [
+        "design-review.md",
+        "design-source.md",
+        "design-candidates.txt"
+      ],
+      "verdicts": [
+        {
+          "value": "aligned",
+          "meaning": "Consistent with a substantive design source"
+        },
+        {
+          "value": "extends_design",
+          "meaning": "No contradictions, but the design is now behind the code"
+        },
+        {
+          "value": "drift",
+          "meaning": "A contradiction or a reversed design decision"
+        },
+        {
+          "value": "no_design_source",
+          "meaning": "Nothing authoritative to check against — the report says what to create"
+        }
+      ]
     },
     {
       "slug": "serro-context-pack",
       "kind": "archon-workflow",
       "name": "Context Pack",
       "author": "SerroAI",
+      "tagline": "Give any agent the program context, with no integration at all.",
       "description": "Compile the program's live context into a committed SERRO-CONTEXT.md, so any agent — Claude Code, Codex, Cursor, Codepress — inherits it as ordinary repository context. Ships the serro-context skill alongside it.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-context-pack",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["automation", "planning"],
-      "targets": ["archon"],
+      "tags": [
+        "automation",
+        "planning"
+      ],
+      "targets": [
+        "archon"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": false
+      "featured": false,
+      "addedAt": "2026-08-11",
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "A resolvable program"
+      ],
+      "writes": "One file: SERRO-CONTEXT.md at your repo root. Nothing is committed or pushed — review the diff.",
+      "outputs": [
+        "SERRO-CONTEXT.md",
+        "the serro-context skill, ready to copy"
+      ]
     },
     {
       "slug": "serro-daily-brief",
       "kind": "archon-workflow",
       "name": "Daily Brief",
       "author": "SerroAI",
-      "description": "Pull today's meetings, recent Jira movement and open decisions from Serro and synthesise them into a short, skimmable brief. When Serro is unreachable it reports the error and returns nothing rather than filling the gap — an empty brief beats an invented one.",
+      "tagline": "Today's meetings and movement, in one thing you read before standup.",
+      "description": "Pull today's meetings, Jira issues updated in the last 24 hours and anything the program is flagging from Serro, and synthesise them into a short, skimmable brief. When Serro is unreachable it reports the error and returns nothing rather than filling the gap — an empty brief beats an invented one.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-daily-brief",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["automation", "reporting"],
-      "targets": ["archon"],
+      "tags": [
+        "automation",
+        "reporting"
+      ],
+      "targets": [
+        "archon"
+      ],
+      "requiresIntegrations": [
+        "serro",
+        "jira"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": false
+      "featured": false,
+      "addedAt": "2026-08-11",
+      "runsInChat": true,
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "Meetings ingested and Jira connected — the brief only reflects activity Serro can read"
+      ],
+      "writes": "Nothing in your repo, and it posts nothing. Brief goes to the run artifacts directory.",
+      "outputs": [
+        "daily-brief.md"
+      ]
     },
     {
       "slug": "serro-digest-builder",
       "kind": "archon-workflow",
       "name": "Digest Builder",
       "author": "SerroAI",
-      "description": "Pull a week of program activity from Serro — meetings, Jira movement, Slack discussion, open risks and decisions — and synthesise a skimmable digest. The weekly, program-scoped counterpart to Daily Brief.",
+      "tagline": "A week of program activity, condensed to what someone would actually read.",
+      "description": "Pull a week of program activity from Serro — meetings, Jira movement, Slack discussion and open risks — and synthesise a skimmable digest. The weekly, program-scoped counterpart to Daily Brief.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-digest-builder",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["automation", "reporting"],
-      "targets": ["archon"],
+      "tags": [
+        "automation",
+        "reporting"
+      ],
+      "targets": [
+        "archon"
+      ],
+      "requiresIntegrations": [
+        "serro",
+        "jira",
+        "slack"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": false
+      "featured": false,
+      "addedAt": "2026-08-11",
+      "runsInChat": true,
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "A resolvable program",
+        "Jira and Slack connected for the activity sections — it reports which sources were empty"
+      ],
+      "writes": "Nothing in your repo, and it posts nothing. Digest goes to the run artifacts directory.",
+      "outputs": [
+        "weekly-digest.md"
+      ]
     },
     {
       "slug": "serro-effort-analysis",
       "kind": "archon-workflow",
       "name": "Effort Analysis",
       "author": "SerroAI",
+      "tagline": "Where engineering effort actually went, split four ways.",
       "description": "Classify a time window of engineering effort into new capability, keep-the-lights-on, internal platform and quality investment, broken down per engineer and per workstream. Reads Jira activity, repo activity, code history and the work-mix data from Serro.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-effort-analysis",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["planning", "reporting"],
-      "targets": ["archon"],
+      "tags": [
+        "planning",
+        "reporting"
+      ],
+      "targets": [
+        "archon"
+      ],
+      "requiresIntegrations": [
+        "serro",
+        "jira"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": false
+      "featured": false,
+      "addedAt": "2026-08-11",
+      "runsInChat": true,
+      "chatCaveat": "Every source it reads is a Serro tool call, so a chat run is the full analysis — you just get it as a message instead of a file.",
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "A time window to analyse",
+        "Jira connected — the classification leans on issue activity"
+      ],
+      "writes": "Nothing in your repo and nothing back to Serro — every call is a read. Report goes to the run artifacts directory.",
+      "outputs": [
+        "effort-analysis.md"
+      ]
     },
     {
       "slug": "serro-sop-writer",
       "kind": "archon-workflow",
       "name": "SOP Writer",
       "author": "SerroAI",
+      "tagline": "Turn an incident into a runbook, root cause included.",
       "description": "Gather the meeting, Slack and Jira context around an incident from Serro, run a five-whys root-cause analysis, and draft a structured SOP. Publishing to Confluence sits behind an explicit approval gate.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-sop-writer",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["automation", "incident"],
-      "targets": ["archon"],
+      "tags": [
+        "automation",
+        "incident"
+      ],
+      "targets": [
+        "archon"
+      ],
+      "requiresIntegrations": [
+        "serro",
+        "confluence"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": false
+      "featured": false,
+      "addedAt": "2026-08-11",
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "An incident with ingested context — the SOP is only as good as what it can reconstruct",
+        "Confluence connected, only if you intend to publish"
+      ],
+      "writes": "Drafts locally first. The one external write — publishing to Confluence — happens only after you approve it; declining leaves the SOP as an artifact.",
+      "outputs": [
+        "sop.md"
+      ]
     },
     {
       "slug": "serro-decision-drift-detector",
       "kind": "archon-workflow",
       "name": "Decision Drift Detector",
       "author": "SerroAI",
+      "tagline": "Find where the code stopped honouring what the team decided.",
       "description": "Audit the checked-out repo against the program's locked decisions, committed customer requirements and open risks, then report divergence grouped by decision — each finding carrying file:line evidence, the Serro item it contradicts, and a severity.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-decision-drift-detector",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["review", "context"],
-      "targets": ["archon"],
+      "tags": [
+        "review",
+        "context"
+      ],
+      "targets": [
+        "archon"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": false
+      "featured": false,
+      "addedAt": "2026-08-11",
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "A program with recorded decisions — with an empty decision log there is nothing to audit against",
+        "The repo checked out at the revision you want audited"
+      ],
+      "writes": "Nothing — the scan is read-only. Report goes to the run artifacts directory; fixing the drift is a separate, deliberate step.",
+      "outputs": [
+        "decision-drift-report.md",
+        "starting-state.diff"
+      ]
     },
     {
       "slug": "serro-incident-response",
       "kind": "archon-workflow",
       "name": "Incident Response",
       "author": "SerroAI",
+      "tagline": "Characterise, fix, document — one approval covers all three writes.",
       "description": "The full incident loop in one run: characterise the issue from Serro context, propose a code fix as a patch and PR body, and draft a five-whys SOP. Everything up to that point is read-only. A single approval gate then files the issue in Serro, publishes the SOP to Confluence, and opens a draft PR with the fix.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-incident-response",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["automation", "incident"],
-      "targets": ["archon"],
+      "tags": [
+        "automation",
+        "incident"
+      ],
+      "targets": [
+        "archon"
+      ],
+      "requiresIntegrations": [
+        "serro",
+        "confluence",
+        "github"
+      ],
       "archonVersionCompat": ">=0.6.0",
-      "featured": false
+      "featured": false,
+      "addedAt": "2026-08-11",
+      "requires": [
+        "Serro MCP connected as a user-scoped server",
+        "Confluence connected for the SOP publish",
+        "gh CLI and a repo path, only if you want the draft PR — without one that step is skipped",
+        "Willingness to have all three writes land: approval is one decision, not three"
+      ],
+      "writes": "The only entry here that writes outside the run: it files an issue in Serro, publishes a page to Confluence, and pushes a branch to open a draft PR. Nothing is written before you approve, and every write step re-checks that approval.",
+      "outputs": [
+        "incident-summary.md",
+        "fix-proposal.md",
+        "sop.md",
+        "a filed Serro issue, a Confluence page and a draft PR, once approved"
+      ]
     },
     {
       "slug": "serro-context",
       "kind": "agent-skill",
       "name": "Program Context",
       "author": "SerroAI",
+      "tagline": "Your agent reads the program before it writes the code.",
       "description": "Teaches an agent to load the program context that governs this repo — objective, open risks, committed customer requirements, recorded decisions — before planning or implementing, and how to behave when a request contradicts it.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-context",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["context", "development"],
-      "targets": ["claude-code", "codex", "copilot", "archon", "chatgpt"],
-      "featured": true
+      "tags": [
+        "context",
+        "development"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot",
+        "archon",
+        "chatgpt"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": true,
+      "addedAt": "2026-08-11",
+      "runsInChat": true,
+      "chatCaveat": "In chat this reads you the context rather than governing an agent that is about to write code — useful for a briefing, but the point of the skill is the governing, so install it where the code gets written.",
+      "triggersOn": "Any non-trivial task — planning, implementing, reviewing — and questions like \"why is it built this way\" or \"has this been decided\".",
+      "requires": [
+        "Serro MCP connected, or a SERRO-CONTEXT.md in the repo — it degrades honestly with neither"
+      ],
+      "writes": "Nothing. It changes how the agent reasons, not your files.",
+      "outputs": [
+        "Decisions treated as binding rather than re-litigated",
+        "Conflicts with program context surfaced before code is written",
+        "Items cited by id instead of paraphrased"
+      ]
     },
     {
       "slug": "serro-standup",
       "kind": "agent-skill",
       "name": "Standup Draft",
       "author": "SerroAI",
+      "tagline": "A status update built from what actually landed.",
       "description": "Draft a status update from what actually happened — merged PRs, decisions, action items, meetings — with evidence attached to every claim. Shipped means merged, blocked names the decision needed.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-standup",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["planning", "reporting"],
-      "targets": ["claude-code", "codex", "copilot", "archon", "chatgpt"],
-      "featured": true
+      "tags": [
+        "planning",
+        "reporting"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot",
+        "archon",
+        "chatgpt"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": true,
+      "addedAt": "2026-08-11",
+      "runsInChat": true,
+      "triggersOn": "\"status update\", \"standup\", \"weekly update\", \"what did we ship\", \"where are we on X\", or prep before reporting to a stakeholder.",
+      "requires": [
+        "Serro MCP connected — the update is only as good as the activity it can read"
+      ],
+      "writes": "Nothing. It drafts; you send.",
+      "outputs": [
+        "Shipped / in progress / blocked / risks, in that order",
+        "A PR, commit, meeting or item id behind every claim",
+        "A closing line naming which sources were empty or unavailable"
+      ]
     },
     {
       "slug": "serro-meeting-prep",
       "kind": "agent-skill",
       "name": "Meeting Prep",
       "author": "SerroAI",
+      "tagline": "Ten minutes out, and you know exactly what to ask.",
       "description": "Prepare for a program meeting from the delta since the last one: what changed, which promises are still open, what needs a decision today, and questions specific enough to be uncomfortable.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-meeting-prep",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["planning", "meetings"],
-      "targets": ["claude-code", "codex", "copilot", "archon", "chatgpt"],
-      "featured": true
+      "tags": [
+        "planning",
+        "meetings"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot",
+        "archon",
+        "chatgpt"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": true,
+      "addedAt": "2026-08-11",
+      "runsInChat": true,
+      "triggersOn": "\"prep for the sync\", \"build an agenda\", \"what should I ask\", \"what's changed since last time\", or before a customer or steering call.",
+      "requires": [
+        "Serro MCP connected, with meetings ingested — the value is entirely in the delta since the last one"
+      ],
+      "writes": "Nothing. It drafts an agenda; it does not send invites or follow-ups.",
+      "outputs": [
+        "What changed since the last meeting, with evidence",
+        "Last meeting's promises and whether they moved",
+        "Decisions needed today, phrased as answerable questions",
+        "Five agenda items maximum — a prep nobody finishes has failed"
+      ]
     },
     {
       "slug": "serro-decision-check",
       "kind": "agent-skill",
       "name": "Decision Check",
       "author": "SerroAI",
+      "tagline": "Stop re-litigating what the team already settled.",
       "description": "Before re-opening a settled question, find out whether it was already decided — and report the decision, its date, its rationale and what it constrains. Four explicit outcomes, including \"discussed but never decided\".",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-decision-check",
       "sha": "5fb3a319be1790153177289c4f669394054c604a",
-      "tags": ["context", "planning"],
-      "targets": ["claude-code", "codex", "copilot", "archon", "chatgpt"],
-      "featured": false
+      "tags": [
+        "context",
+        "planning"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot",
+        "archon",
+        "chatgpt"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "addedAt": "2026-08-11",
+      "runsInChat": true,
+      "triggersOn": "\"has this been decided\", \"why is it built this way\", \"can we change X\", \"didn't we discuss this\", or a proposal that contradicts an earlier choice.",
+      "requires": [
+        "Serro MCP connected — it searches the decision log, meetings and threads"
+      ],
+      "writes": "Nothing. It reports; it never decides.",
+      "outputs": [
+        "One of four outcomes: decided and current / premises changed / discussed but never decided / no record",
+        "The decision quoted with its date and rationale",
+        "For a reversal: what it constrains and who needs to agree"
+      ]
     }
   ]
 }
