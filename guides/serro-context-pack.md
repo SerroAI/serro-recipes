@@ -20,8 +20,9 @@ all read Markdown files already.
 
 Every item keeps its id and status, so an agent can say "RISK-12 says X"
 instead of "there is some concern about X". The file states its own generation
-date. A section with no data says "None recorded" rather than being left empty
-or guessed.
+date. Open risks and Decisions already made always appear, and say "None
+recorded" when Serro has nothing, so a reader can tell absence from omission.
+Other sections with no data are left out rather than guessed.
 
 ## Running it
 
@@ -34,7 +35,8 @@ This workflow writes to your repo. It creates or overwrites exactly one file,
 commit it:
 
 ```bash
-git diff -- SERRO-CONTEXT.md
+git diff -- SERRO-CONTEXT.md   # after a regeneration
+cat SERRO-CONTEXT.md           # first run: the file is new, so git diff shows nothing
 ```
 
 A final check fails the run if the file is missing, shorter than 15 lines, or
@@ -46,7 +48,7 @@ context file is worse than a stale one.
 
 The file is committed, so everyone with repo access can read it. The workflow is
 told to leave out credentials, customer personal data and internal URLs behind
-auth, and to note the omission. Check the diff anyway.
+auth, and to note the omission. Read it anyway.
 
 ## The companion skill
 

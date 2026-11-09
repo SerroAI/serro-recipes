@@ -14,7 +14,8 @@ The run fails, rather than reporting a clean audit, if:
 - Serro can't be reached.
 - No program resolves. The program comes from the run message, then
   `SERRO_PROGRAM`, then the repository name matched against linked repos.
-- The program has no checkable constraints, for example an empty decision log.
+- The program's decisions, committed requirements and risks together yield no
+  checkable constraints.
 
 Zero constraints would otherwise look like zero drift.
 
@@ -37,8 +38,10 @@ archon workflow run serro-decision-drift-detector "Checkout Revamp"
 
 Check out the revision you want audited first. The run works in an isolated
 worktree, and it is read-only. It snapshots the working tree at the start and
-asserts at the end that nothing changed. If the audit modified anything, the
-final step fails and says so. Nothing is written to Serro or posted anywhere.
+asserts at the end that nothing changed. If the audit modified a tracked or
+untracked file, the final step fails and says so. Git-ignored files are not in
+the snapshot, so a change to one would not be caught. Nothing is written to
+Serro or posted anywhere.
 
 ## Reading the report
 

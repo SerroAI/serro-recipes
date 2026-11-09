@@ -18,9 +18,10 @@ repo path, pushes a branch and opens a draft PR. Read the gate before you approv
 | Write | report-issue, publish-sop, open-pr | Serro, Confluence, your repo |
 
 There is one gate on purpose. You see the full set of writes in one decision
-instead of three. Each write step checks your decision again, and reports
-"skipped" if you declined. If you decline, nothing is filed, published or pushed,
-and the drafts stay as artifacts.
+instead of three. Rejecting cancels the run before any write step starts:
+nothing is filed, published or pushed, and the drafts stay as artifacts. After
+an approval, each write step reads your approval comment again and does nothing
+if it does not read as an approval.
 
 ## Running it
 
@@ -39,8 +40,8 @@ fix by hand and reports "PR step deferred".
 
 When it does run, it creates a branch, applies the change, commits, pushes and
 opens a **draft** PR. It never opens a ready-for-review PR and never merges.
-Because it can commit and push, a second run on the same path is refused while
-another holds it.
+Archon locks only the run's own working path, not the repo path you name, so
+don't run two incident responses against the same repo at once.
 
 ## Why the guard matters here
 
@@ -56,8 +57,10 @@ the run fails before anything is drafted.
 | `sop.md` | Five-whys SOP and runbook |
 | `incident-summary.md` | What was filed, published and pushed, and anything skipped and why |
 
-The summary runs even after a partial run, so it always says what exists and what
-doesn't. For just the runbook, use [SOP Writer](/docs/guides/serro-sop-writer).
+The summary is written after every write step has finished. If a write step
+failed, the summary may not be written at all, so check each write step's result
+in the run log to see what exists. For just the runbook, use
+[SOP Writer](/docs/guides/serro-sop-writer).
 
 ## Example output
 

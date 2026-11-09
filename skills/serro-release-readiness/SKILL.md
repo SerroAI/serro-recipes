@@ -20,9 +20,9 @@ Use whichever Serro server is present.
 
 1. Look for Serro MCP tools (`whoami`, `list_programs`, `get_program`,
    `get_program_widget_data`). Call `whoami` once to confirm identity and org.
-2. If there are no Serro tools, or `whoami` fails with an auth error, **stop**.
-   Reply with `SERRO CONTEXT UNAVAILABLE`, the exact error (or "no Serro MCP
-   tools present"), and how to connect:
+2. If there are no Serro tools, or `whoami` still fails after one retry (auth,
+   network or any other error), **stop**. Reply with `SERRO CONTEXT UNAVAILABLE`,
+   the exact error (or "no Serro MCP tools present"), and how to connect:
    `claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp && claude mcp login serro`
    (Codex/Copilot: add `https://mcp.serro.ai/mcp` as an MCP server in their
    config). Never fall back to a context-free go/no-go.
@@ -104,6 +104,9 @@ Rules of evidence:
 
 - Every blocker cites the item id or exact title **and** the commit, PR or file
   that supports the claim. Uncited blockers are opinions; drop them.
+- An unshipped requirement has no landed work to cite. Cite the requirement id
+  and the release scope you searched (e.g. "no commit or PR in v2.3.0..HEAD
+  mentions REQ-7") instead.
 - Distinguish "no evidence this shipped" from "evidence this did not ship". Say
   which you have.
 - A lookup that was unavailable rather than empty goes under Limitations, never
@@ -114,7 +117,9 @@ Verdict:
 
 - `no_go`: at least one committed requirement is unshipped, or an open
   high-severity risk is made worse by this release.
-- `go_with_risk`: no hard blockers, but named risks or gaps ride along.
+- `go_with_risk`: no `no_go` condition holds, but flagged items (including
+  open release-gating action items and contradicted decisions), named risks or
+  gaps ride along.
 - `go`: nothing outstanding against a context substantive enough to judge. If
   the context is too thin to judge, it is not `go`; list the gap.
 

@@ -22,9 +22,9 @@ Use whichever Serro server is present.
 
 1. Look for Serro MCP tools (`whoami`, `list_programs`, `get_program`,
    `get_program_widget_data`). Call `whoami` once to confirm identity and org.
-2. If there are no Serro tools, or `whoami` fails with an auth error, **stop**.
-   Reply with `SERRO CONTEXT UNAVAILABLE`, the exact error (or "no Serro MCP
-   tools present"), and how to connect:
+2. If there are no Serro tools, or `whoami` still fails after one retry (auth,
+   network or any other error), **stop**. Reply with `SERRO CONTEXT UNAVAILABLE`,
+   the exact error (or "no Serro MCP tools present"), and how to connect:
    `claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp && claude mcp login serro`
    (Codex/Copilot: add `https://mcp.serro.ai/mcp` as an MCP server in their
    config). Never fall back to a context-free review.
@@ -73,7 +73,8 @@ Do this yourself with git/gh, in this order:
    `BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD | sed 's|^origin/||')`;
    use `main` if empty; if `git rev-parse --verify origin/$BASE` fails, use
    `master`. Then `git diff origin/$BASE...HEAD`.
-3. If that is empty too, use the uncommitted diff: `git diff`.
+3. If that is empty too, use the uncommitted diff, staged and unstaged:
+   `git diff HEAD`.
 4. If all three are empty, stop: "No change to review: no PR diff, no branch
    diff, no working diff." Never report an all-clear on an empty diff.
 
@@ -103,8 +104,9 @@ Rules of evidence:
   header) **and** the context item (id or exact title). One-sided findings are
   speculation; drop them.
 - If the context is thin (no risks, no requirements, empty widget catalog), say
-  so plainly and return `ready_with_caveats` with that caveat. Do not
-  manufacture findings.
+  so plainly. A finding that meets `not_ready` still decides the verdict;
+  otherwise return `ready_with_caveats` with that caveat. Do not manufacture
+  findings.
 - Rank findings by consequence, not count. Mark each blocking or not.
 
 Verdict:

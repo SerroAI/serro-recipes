@@ -46,8 +46,8 @@ _Illustrative example for a fictional program. A real run uses your own program'
 **Scope:** 47 commits since v2.3.0
 
 ## Summary
-One committed Northwind requirement has not shipped, and one open risk gets
-worse in this release. Everything else is manageable.
+One committed Northwind requirement shows no evidence of shipping, and one open
+risk gets worse in this release. Everything else is manageable.
 
 ## Blockers (2)
 1. **REQ-7 "Saved cards for guest checkout"** (committed, Northwind). Owner:

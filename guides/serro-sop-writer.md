@@ -21,8 +21,10 @@ and it sits behind an explicit approval step:
 3. Stop and ask you.
 4. Publish only if you approve.
 
-Declining leaves the SOP at `sop.md` and publishes nothing. The publish step
-checks your decision again instead of assuming it. It publishes as the identity
+Rejecting cancels the run before the publish step, so the SOP stays at `sop.md`
+and nothing is published. After an approval, the publish step reads your
+approval comment again and skips publishing if it does not read as an approval.
+It publishes as the identity
 Serro reports for you, into that identity's own workspace. Without a Confluence
 write tool it says so and leaves the SOP local.
 

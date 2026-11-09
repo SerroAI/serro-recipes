@@ -21,9 +21,9 @@ Use whichever Serro server is present.
 
 1. Look for Serro MCP tools (`whoami`, `list_programs`, `get_program`,
    `get_program_widget_data`). Call `whoami` once to confirm identity and org.
-2. If there are no Serro tools, or `whoami` fails with an auth error, **stop**.
-   Reply with `SERRO CONTEXT UNAVAILABLE`, the exact error (or "no Serro MCP
-   tools present"), and how to connect:
+2. If there are no Serro tools, or `whoami` still fails after one retry (auth,
+   network or any other error), **stop**. Reply with `SERRO CONTEXT UNAVAILABLE`,
+   the exact error (or "no Serro MCP tools present"), and how to connect:
    `claude mcp add --transport http --scope user serro https://mcp.serro.ai/mcp && claude mcp login serro`
    (Codex/Copilot: add `https://mcp.serro.ai/mcp` as an MCP server in their
    config). Never fall back to a context-free review.
@@ -53,7 +53,7 @@ lookup as returned data, empty, or failed.
    branch: `BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD | sed 's|^origin/||')`;
    `main` if empty; `master` if `git rev-parse --verify origin/$BASE` fails.
    Then `git diff origin/$BASE...HEAD`.
-3. If still empty: `git diff` (uncommitted changes).
+3. If still empty: `git diff HEAD` (staged and unstaged changes).
 4. If all are empty, stop: "No change to review: no PR diff, no branch diff, no
    working diff."
 
@@ -103,9 +103,11 @@ Finding types:
 
 Rules of evidence:
 
-- Every finding quotes the design assertion **and** cites the diff location
-  (`path:line` or hunk). If you cannot quote the design, you are inferring
-  intent; drop it.
+- Every contradiction, decision reversal or stale-design finding quotes the
+  design assertion **and** cites the diff location (`path:line` or hunk). If you
+  cannot quote the design, you are inferring intent; drop it.
+- A silent extension has no assertion to quote. Cite the diff location and name
+  the design sections you checked that do not cover it.
 - Separate "contradicts the design" from "the design is silent".
 - Rank by consequence: a boundary violation outranks a naming deviation.
 
