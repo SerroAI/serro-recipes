@@ -22,7 +22,9 @@ Every item keeps its id and status, so an agent can say "RISK-12 says X"
 instead of "there is some concern about X". The file states its own generation
 date. Open risks and Decisions already made always appear, and say "None
 recorded" when Serro has nothing, so a reader can tell absence from omission.
-Other sections with no data are left out rather than guessed.
+Other sections with no data are left out rather than guessed. "None recorded"
+is not marked differently when a lookup failed or the program has no such
+widget; the run's `serro-context.md` artifact notes which lookups failed.
 
 ## Running it
 
@@ -40,7 +42,9 @@ cat SERRO-CONTEXT.md           # first run: the file is new, so git diff shows n
 ```
 
 A final check fails the run if the file is missing, shorter than 15 lines, or
-missing its required sections, so a failed generation can't pass as a success.
+missing its required sections, so an empty or truncated file can't pass as a
+success. It does not confirm this run rewrote an existing file, so check the
+generation date in the file's header.
 Regeneration overwrites the file instead of merging, because a half-updated
 context file is worse than a stale one.
 

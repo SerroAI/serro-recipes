@@ -17,8 +17,9 @@ It combines three inputs:
 
 - **Program context** from Serro: risks, requirements, decisions and action
   items.
-- **Release scope** from git: commits and files since the last tag. Without any
-  tags it uses the last 100 commits.
+- **Release scope** from git: up to 300 commits since the last tag and the
+  last 60 lines of `git diff --stat`. Without any tags it uses the last 100
+  commits and lists no files.
 - **Delivery signals** from Serro: merged PRs, program activity, recent meetings
   and the latest report.
 

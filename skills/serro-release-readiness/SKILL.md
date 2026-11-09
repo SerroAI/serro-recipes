@@ -68,7 +68,8 @@ git log --no-merges --pretty='- %h %s (%an, %ad)' --date=short -100
 ```
 
 Record the last tag (or "none"), the commit count since it, and whether you used
-the 100-commit fallback.
+the 100-commit fallback. If the log or stat output was cut off, list that under
+Limitations and cite only the range you actually read.
 
 ## 5. Delivery signals from Serro
 
@@ -106,7 +107,8 @@ Rules of evidence:
   that supports the claim. Uncited blockers are opinions; drop them.
 - An unshipped requirement has no landed work to cite. Cite the requirement id
   and the release scope you searched (e.g. "no commit or PR in v2.3.0..HEAD
-  mentions REQ-7") instead.
+  mentions REQ-7") instead. An open release-gating action item, such as a
+  customer sign-off, is cited by its id and Serro status.
 - Distinguish "no evidence this shipped" from "evidence this did not ship". Say
   which you have.
 - A lookup that was unavailable rather than empty goes under Limitations, never
@@ -121,7 +123,8 @@ Verdict:
   open release-gating action items and contradicted decisions), named risks or
   gaps ride along.
 - `go`: nothing outstanding against a context substantive enough to judge. If
-  the context is too thin to judge, it is not `go`; list the gap.
+  the context is too thin to judge, or a lookup failed, it is not `go`; list the
+  gap.
 
 Fix the verdict before writing the report, and do not soften it while writing.
 

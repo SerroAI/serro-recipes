@@ -24,7 +24,9 @@ archon workflow run serro-pr-readiness "Checkout Revamp"
 ```
 
 The program is found from the run message, the `SERRO_PROGRAM` environment
-variable, or a match on the repository name.
+variable, or a match on the repository name. Any 1 to 7 digit number in the
+message is read as a PR number, so for a program name like "Checkout 2026", set
+`SERRO_PROGRAM` instead.
 
 ## When the context is thin
 

@@ -116,6 +116,7 @@ Verdict:
 - `ready_with_caveats`: findings exist but none block, or the program context
   was too thin to judge confidently.
 - `ready`: no conflicts against a program context substantive enough to check.
+  If a lens's lookup failed, it is at most `ready_with_caveats`.
 
 Fix the verdict before writing the report, and do not soften it while writing.
 

@@ -61,7 +61,7 @@
         "A program that matches this repo (or named in the run message)",
         "gh CLI for PR-number mode — otherwise it diffs the current branch"
       ],
-      "writes": "Nothing in your repo. Report goes to the run artifacts directory.",
+      "writes": "Nothing in your repo. The Archon workflow saves the report to the run artifacts directory; the Agent Skill edition shows it in the conversation.",
       "outputs": [
         "pr-readiness-report.md",
         "serro-context.json",
@@ -115,7 +115,7 @@
         "A resolvable program",
         "Git tags improve the scope section (falls back to the last 100 commits)"
       ],
-      "writes": "Nothing in your repo. Report goes to the run artifacts directory.",
+      "writes": "Nothing in your repo. The Archon workflow saves the report to the run artifacts directory; the Agent Skill edition shows it in the conversation.",
       "outputs": [
         "release-readiness.md",
         "release-scope.txt",
@@ -426,7 +426,7 @@
         "gh CLI and a repo path, only if you want the draft PR — without one that step is skipped",
         "Willingness to have all three writes land: approval is one decision, not three"
       ],
-      "writes": "The only entry here that writes outside the run: it files an issue in Serro, publishes a page to Confluence, and pushes a branch to open a draft PR. Nothing is written before you approve, and every write step re-checks that approval.",
+      "writes": "Writes outside the run: it files an issue in Serro, publishes a page to Confluence, and, if you name a repo path, pushes a branch to open a draft PR. Nothing is written before you approve, and every write step re-checks that approval.",
       "outputs": [
         "incident-summary.md",
         "fix-proposal.md",

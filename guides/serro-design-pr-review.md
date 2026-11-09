@@ -7,9 +7,11 @@ document speaks to them.
 
 The design comes from two places:
 
-- **The repo.** Tracked Markdown files whose names match
-  `design|architecture|spec|prd|rfc`, found with `git ls-files` so build output
-  is never scanned.
+- **The repo.** Tracked Markdown files whose names start with `design`,
+  `architecture`, `spec`, `prd` or `rfc`, or contain one of those words under
+  `docs/`, found with `git ls-files` so build output is never scanned. Only the
+  first 40 matches are read, so pass the path of a design file named any other
+  way.
 - **Serro.** Linked program documents, the program objective and the decision
   log. A committed `design.md` can go stale within weeks. The decision log
   records what the team agreed, and when.
@@ -37,7 +39,8 @@ archon workflow run serro-design-pr-review "1234"
 archon workflow run serro-design-pr-review "1234 docs/design.md"
 ```
 
-Without a PR number it falls back to the diff of the current branch.
+Without a PR number it falls back to the diff of the current branch. Any 1 to
+7 digit number in the message is read as a PR number.
 
 ## Reading the report
 
@@ -70,8 +73,8 @@ retry state the design does not describe.
    payment step. Smallest fix: keep the cart-time calculation and reuse it.
 2. **Contradiction.** docs/design.md, "Payments": "The payment step never
    mutates the cart." `src/payments/step.ts:57` rewrites line totals.
-3. **Silent extension.** `src/payments/retry.ts:12` adds a `RETRYING` state.
-   The design lists only `PENDING`, `PAID` and `FAILED`.
+3. **Silent extension.** docs/design.md, "Payment states": "A payment is
+   `PENDING`, `PAID` or `FAILED`." `src/payments/retry.ts:12` adds `RETRYING`.
 
 ## Suggested design updates
 - docs/design.md, "Payment states": add `RETRYING`, or remove it from the PR.
