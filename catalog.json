@@ -614,9 +614,9 @@
         "A dataset that already exists in a program you can edit; create it in Serro first",
         "An agent app that can show Serro's approval prompt (for example Claude Code)"
       ],
-      "writes": "Rows in the dataset you name, only after you approve each batch. Each batch is one new version; restoring the version before the first batch undoes the run.",
+      "writes": "Rows in the dataset you name, only after you approve each batch. Each batch is one new version.",
       "outputs": [
-        "Rows added and changed, as one dataset version credited to your agent",
+        "Rows added and changed, in one or more batches; each batch is one dataset version credited to your agent",
         "Which values were left empty for lack of a source, and which rows were skipped",
         "Where each value came from"
       ]

@@ -134,5 +134,7 @@ Sources: <short list, or where the per-row notes are>
 
 Don't name version numbers. Each batch is one new version, and the dataset's
 **History** shows each as one entry with your app's name. To undo the whole run,
-the user restores the version from just before your first batch in the widget's
-**Versions** tab; say which batches the run made so they can find it.
+the user can restore the version from just before your first batch in the
+widget's **Versions** tab. Say which batches the run made, and warn that a
+restore also undoes any other edit or refresh since that version: they should
+check **History** between your first and last batch before restoring.

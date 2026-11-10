@@ -40,7 +40,8 @@ Serro, or use **Create dataset** on a widget's table, first.
    becomes one new version, and **History** shows it with your agent's name.
 
 To undo a run, restore the version from just before its first batch in the
-widget's **Versions** tab.
+widget's **Versions** tab. A restore also undoes anything else changed since
+that version, so check **History** for other people's edits first.
 
 ## Good datasets to start with
 
