@@ -27,12 +27,16 @@ the lead works through the areas itself, one after another.
 3. **The lead watches.** It follows the workspace's change feed and who is
    present, and restarts any area whose worker stopped.
 4. **The lead merges.** Rows with the same key are combined. When workers
-   disagree and neither source is clearly stronger, the value is left out and
-   listed for you.
-5. **You approve.** The lead proposes one batch per worker. You approve the first
-   in your app and can allow the rest for the session. Each batch is one dataset
-   version, credited to its worker, for example "added 40 rows · via worker-2
-   (Claude Code)".
+   disagree and neither source is clearly stronger, the cell is left as it is
+   and listed for you. Values already in the dataset are never cleared.
+5. **You approve.** The lead proposes one batch per worker, shows you what each
+   adds and changes, and waits for your yes. Your app may ask you to approve as
+   well and can let you allow the rest for the session. Each batch is one
+   dataset version, credited to its worker, for example "added 40 rows · via
+   worker-2 (Claude Code)".
+
+If the dataset can't take row edits, the lead says why before starting any
+workers.
 
 The crew's files stay in the program's workspace, so a later run, or another
 agent, can pick up where this one stopped.
@@ -51,12 +55,18 @@ worker-3 stopped responding and its lease on "data-platform" lapsed. Restarted
 the area as worker-5.
 
 Merged 94 rows. 1 conflict: two workers found different owners for `ledger-sync`
-(CODEOWNERS vs the on-call schedule). Left it out for you.
+(CODEOWNERS vs the on-call schedule). Left it as it is for you.
 
+4 batches ready: 13 rows to add, 81 to change. Before → after samples per
+worker are above. Apply them?
+
+**User:** Yes.
+
+**Agent:**
 CREW crew-20261110-1415 — dataset Service inventory
-worker-1  payments       +6  ~18  v15
-worker-2  identity       +0  ~22  v16
-worker-4  web            +3  ~19  v17
-worker-5  data-platform  +4  ~22  v18
+worker-1  payments       added 6 rows and changed 18
+worker-2  identity       changed 22 rows
+worker-4  web            added 3 rows and changed 19
+worker-5  data-platform  added 4 rows and changed 22
 Conflicts left for you: 1 (see crew/crew-20261110-1415/merged.md)
 ```

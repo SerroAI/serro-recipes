@@ -28,24 +28,35 @@ widget's table), then stop.
    backed by a dataset shows a `Dataset:` line with its id.
 3. If more than one dataset could match, ask the user which one. Do not pick.
 
-## 2. Learn its rules
+## 2. Learn its rules, and check you can write
 
 Call `mcp__serro__describe_dataset(dataset_id)`. It returns:
 
-- the columns, each with its type and who maintains it (`source` or `curated`)
-- the **key**: the column or columns that name a row
-- the assumptions and the **checks** every row must pass (for example "owner is
-  the email of someone in the organization")
-- `maxRowsPerBatch` (200)
+- `keyColumns`: the column or columns that name a row
+- `columns` with their types. On a dataset with a declared schema
+  (`declared: true`), each column also says who maintains it: `source` (Serro's
+  refresh fills it) or `curated` (only people and agents do)
+- `refresh` and `rules`: how a refresh treats your edits
+- `checks` (and `memberChecks`): what every row must pass, for example "owner is
+  the email of someone in the organization"
+- `edits`: the edits you may make now, and `maxRowsPerBatch` (200)
 
-Then read what is already there: `mcp__serro__get_dataset` for a page of rows and
-a per-column profile, or `mcp__serro__query_dataset` with one read-only SQL
-SELECT (for example, which keys have an empty `owner`). Work out which rows are
-new and which existing rows have gaps.
+**Stop here unless `edits` includes `row_upsert`.** Tell the user the
+`rowEditsBlocked` reason in their words (no edit access, no key, or a dataset
+every refresh rebuilds) and don't gather anything.
 
-Prefer filling **curated** columns and adding new keys. A `source` column is
-overwritten the next time the refresh returns that key, so writing one only lasts
-until then. If the user asks you to change source columns anyway, say so first.
+Read what `refresh` means for your edits:
+
+- `manual`: nothing refreshes it; edits last.
+- `keeps_rows`: an edit lasts until a refresh returns that key again; then the
+  source's values replace the source-maintained columns. On a declared dataset,
+  curated columns are never replaced, so prefer them. On an undeclared one, say
+  that your values last only until the next refresh returns those rows.
+
+Then read what is already there: `mcp__serro__get_dataset` for a page of rows
+and a per-column profile, or `mcp__serro__query_dataset` with one read-only SQL
+SELECT (for example, which keys have an empty `owner`). Keep the current values
+of every row you might touch: you need them in step 3.
 
 ## 3. Gather rows
 
@@ -56,49 +67,65 @@ config, git history), Serro's tools (`mcp__serro__search_jira`,
 
 - **One source per value.** Keep a note of where each value came from (a file
   and line, a ticket, a meeting). You report it at the end.
-- **Unknown stays empty.** A `null` is honest; a plausible guess is a defect
-  someone will trust later.
+- **Never guess.** A plausible guess is a defect someone will trust later.
 - **Match the types and checks yourself first.** Dates as ISO dates, emails as
   real organization emails (`mcp__serro__search_people` or the dataset's
-  existing values), enums spelled exactly as existing rows spell them.
-- **Every row in a batch sets the same columns**, and every row names every key
-  column.
+  existing values), enums spelled exactly as existing rows spell them. Keys
+  exactly as the dataset holds them.
 
-## 4. Show, then propose
+**Every row in a batch sets the same columns, and a `null` clears a cell.** So:
 
-Before proposing, tell the user in a few lines: how many rows you will add, how
-many you will change, which columns, and a short sample with sources. Then:
+- For an **existing row**, any column in the batch that you found nothing new
+  for gets its **current value**, copied from what you read in step 2. Never send
+  `null` over a value that is already there.
+- For a **new row**, a column you have no source for is `null`.
+- If rows need very different columns, split them into batches by the columns
+  they set rather than padding.
+
+## 4. Propose, show, wait
 
 ```
 mcp__serro__propose_dataset_edit(
   dataset_id, verb: "row_upsert",
-  rows: [ { <key columns>, <columns you set> }, ... ]   # 1 to 200
+  rows: [ { <key columns>, <columns in this batch> }, ... ]   # 1 to 200
 )
 ```
 
 Proposing writes nothing. Serro checks every row; if any row fails, nothing is
-applied and the reply names each failing row and check. Fix those rows (or drop
+proposed and the reply names each failing row and check. Fix those rows (or drop
 them and say why) and propose again. More than 200 rows means several batches,
 each its own proposal.
 
+When the proposal is accepted, show the user what it returned: rows added and
+changed, and the changes as a before → after table (a sample if there are many),
+with your sources. Then ask whether to apply it, and **wait for their answer**.
+Don't propose and confirm in the same turn. The one exception: the result says
+the user already allowed edits to this dataset without asking; then confirm
+right away and tell them what changed.
+
 ## 5. Confirm
 
-`mcp__serro__confirm_dataset_edit(dataset_id, proposal_id)`. The user's app asks
-them to approve the change; they can also allow edits to this dataset for the
-session or for an hour. A proposal expires after an hour.
+When the user says yes: `mcp__serro__confirm_dataset_edit(dataset_id,
+proposal_id)`. Their app may also ask them to approve the change, and can offer
+to allow edits to this dataset for the session or for an hour. A proposal
+expires after an hour; if it expired, or the dataset changed meanwhile, propose
+again.
 
 If the user declines, stop and ask what to change. Don't re-propose the same rows.
 
 ## 6. Report
 
+Report what Serro's confirm returned, plus what you left alone:
+
 ```
-DATASET <name> — v<version>
-Added: <n> rows   Changed: <n> rows   Columns: <list>
-Left empty: <column> on <n> rows (no source found)
+DATASET <name>
+<Serro's summary, e.g. "added 3 rows and changed 24">
+Columns: <list>
+Left empty: <column> on <n> new rows (no source found)
 Skipped: <key> — <reason>
 Sources: <short list, or where the per-row notes are>
 ```
 
-The batch is one new version, and the dataset's **History** shows it as one entry
-with your app's name. To undo it, the user can restore the previous version from
-the widget's **Versions** tab.
+Don't name version numbers. The batch is one new version, and the dataset's
+**History** shows it as one entry with your app's name. To undo it, the user can
+restore the previous version from the widget's **Versions** tab.

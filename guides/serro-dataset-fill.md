@@ -18,18 +18,23 @@ Serro, or use **Create dataset** on a widget's table, first.
 1. **Finds the dataset.** It lists the program's widgets and their datasets. If
    more than one could match, it asks you.
 2. **Learns the rules.** `describe_dataset` gives it the columns and their types,
-   the key, which columns are curated, and the checks every row must pass. It
-   reads the rows already there to tell new rows from gaps.
-3. **Gathers rows.** Each value comes from a source it can name. A value it
-   can't source stays empty. It prefers curated columns, because Serro's refresh
-   overwrites the other columns.
-4. **Shows, then proposes.** It tells you how many rows it will add and change,
-   with a sample. Then it proposes one batch of up to 200 rows. Proposing writes
-   nothing. Serro checks every row, and if one fails, nothing applies and the
-   agent is told which rows failed which checks.
-5. **You approve.** Your app asks you to apply the change. You can also allow
-   edits to this dataset for the session or for an hour. The batch becomes one
-   new version, and **History** shows it with your agent's name.
+   the key, how a refresh treats edits, and the checks every row must pass. If
+   the dataset can't take row edits (you can't edit the program, it has no key,
+   or every refresh rebuilds it), the agent says why and stops before doing any
+   work. It reads the rows already there to tell new rows from gaps.
+3. **Gathers rows.** Each value comes from a source it can name. It never
+   guesses, and it never clears a value that is already there: a new row's
+   unsourced column stays empty, and an existing row keeps its current value. On
+   a dataset with a declared schema, it prefers curated columns, because Serro's
+   refresh overwrites the others.
+4. **Proposes, then asks you.** It proposes one batch of up to 200 rows.
+   Proposing writes nothing. Serro checks every row, and if one fails, nothing
+   is proposed and the agent is told which rows failed which checks. Once Serro
+   accepts the batch, the agent shows you the rows it adds and the before → after
+   changes, and waits for your yes.
+5. **You approve.** Your app may ask you to approve as well, and can let you
+   allow edits to this dataset for the session or for an hour. The batch becomes
+   one new version, and **History** shows it with your agent's name.
 
 To undo it, restore the previous version from the widget's **Versions** tab.
 
@@ -54,13 +59,16 @@ _Illustrative example for a fictional program. A real run uses your own program'
 
 I can fill 18 owners (from CODEOWNERS) and 24 runbooks (from each service's
 README). 3 owners stay empty: their CODEOWNERS entry is a team alias, not a person.
-Sample:
-| service | owner | runbook | source |
-| payments-api | priya@acme.dev | docs/runbooks/payments.md | CODEOWNERS:12 |
+Serro accepted the batch: 27 rows changed. Before → after (sample):
+| service | owner | runbook | sources |
+| payments-api | — → priya@acme.dev | — → docs/runbooks/payments.md | CODEOWNERS:12, README |
+Apply it?
 
-Proposing 27 rows… Serro accepted the batch. Approve it in your app.
+**User:** Yes.
 
-DATASET Service inventory — v14
-Added: 0 rows   Changed: 27 rows   Columns: owner, runbook
-Left empty: owner on 3 rows (team alias, no person)
+**Agent:**
+DATASET Service inventory
+changed 27 rows
+Columns: owner, runbook
+Kept as they were: owner on 3 rows (team alias, no person)
 ```

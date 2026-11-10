@@ -24,19 +24,28 @@ yours has none, run the areas yourself one after another with the same protocol.
 1. Resolve the program (`mcp__serro__list_programs`, or `SERRO-CONTEXT.md`) and
    the dataset (`mcp__serro__get_program_widget_data` shows `Dataset:` lines). If
    more than one dataset could match, ask.
-2. `mcp__serro__describe_dataset(dataset_id)`: columns, types, which are
-   `curated`, the key, the checks, `maxRowsPerBatch`.
-3. `mcp__serro__program_join(program_id, role: "lead", working_on: "<sweep>",
+2. `mcp__serro__describe_dataset(dataset_id)`: `keyColumns`, `columns` and their
+   types (on a declared dataset, each says whether it is `source` or `curated`),
+   `refresh` and `rules`, the `checks`, `edits` and `maxRowsPerBatch`.
+   **Stop unless `edits` includes `row_upsert`**: tell the user the
+   `rowEditsBlocked` reason and start no workers. If `refresh` is `keeps_rows` on
+   an undeclared dataset, tell the user the crew's values last only until a
+   refresh returns those rows again.
+3. Read the current rows with `mcp__serro__get_dataset` (page through them) or
+   `mcp__serro__query_dataset`. You need every touched row's current values when
+   you merge.
+4. `mcp__serro__program_join(program_id, role: "lead", working_on: "<sweep>",
    agent_label: "lead")`. Keep the `agent_id`.
-4. Pick a run id (`crew-<yyyymmdd-hhmm>`) and split the sweep into **3 to 6 areas**
+5. Pick a run id (`crew-<yyyymmdd-hhmm>`) and split the sweep into **3 to 6 areas**
    that don't overlap: one per repo, service group, ticket project or document
    set. More areas than workers is fine; workers take the next free one.
-5. Write the plan with `mcp__serro__program_fs_write(program_id, agent_id,
+6. Write the plan with `mcp__serro__program_fs_write(program_id, agent_id,
    path: "crew/<run>/plan.md", if_version: 0, content)`. It holds: the dataset
-   id, the key and columns every row must set, the checks, the areas (one line
-   each), and the row format below. Workers read it; it is the contract.
+   id, the key and the columns the crew fills, their types, the checks, the areas
+   (one line each), and the row format below. Workers read it; it is the contract.
 
-Row format, one JSON object per line in `rows.jsonl`:
+Row format, one JSON object per line in `rows.jsonl`. A row carries the key and
+**only the columns the worker found a value for**, each with its source:
 
 ```json
 {"row": {"<key col>": "…", "<col>": "…"}, "sources": {"<col>": "<file:line | ticket | meeting>"}}
@@ -55,13 +64,17 @@ steps:
    `program_fs_claim(program_id, agent_id, path: "crew/<run>/areas/<area>/",
    ttl_s: 1800)` and keep the `fence`. `lease_held` means another worker has it;
    take the next one.
-3. Gather rows for that area only. One source per value; unknown stays `null`;
-   match the column types and checks; every row sets the plan's columns.
-4. Write `crew/<run>/areas/<area>/rows.jsonl` with `program_fs_write`
+3. **Call `program_heartbeat` at least every 10 minutes while you hold the
+   lease**, whatever other program calls you make. Only a heartbeat renews the
+   lease; other calls just keep you present.
+4. Gather rows for that area only. One source per value; leave out a column you
+   found nothing for (never write a guess, and never `null` it); match the column
+   types and checks; keys exactly as the dataset holds them.
+5. Write `crew/<run>/areas/<area>/rows.jsonl` with `program_fs_write`
    (`if_version: 0`, the `fence`), and a few lines in `notes.md` beside it: what
-   was covered, what was skipped and why.
-5. `program_heartbeat` if a step runs longer than a few minutes without other
-   program calls (presence drops after 10 minutes of silence).
+   was covered, what was skipped and why. If a write returns `stale_fence` or
+   `lease_held`, your lease lapsed: re-claim the area with your fence; if another
+   worker holds it now, stop and report that to the lead instead of writing.
 6. Append one line to `crew/<run>/status.log` with `program_fs_append`
    (`<worker> done <area> <n> rows`), then `program_fs_release`, take the next
    free area or `program_leave`.
@@ -70,31 +83,45 @@ steps:
 ## Lead: watch, merge, land
 
 1. Follow progress with `program_fs_changes(program_id, agent_id, wait_s: 25)`
-   and `program_who`. An area whose lease expired with no `rows.jsonl` is free
-   again: start a new worker for it, or do it yourself.
+   and `program_who`, and `program_heartbeat` your own presence. An area whose
+   lease expired with no `rows.jsonl` is free again: start a new worker for it,
+   or do it yourself.
 2. When every area has `rows.jsonl`, read them all and merge by key:
    - Same key, same values: keep one, credit the first worker.
    - Same key, different values: keep the one with the stronger source. If you
-     can't tell, leave the value out and list it as a conflict for the user.
+     can't tell, don't change that cell and list it as a conflict for the user.
    - Drop rows that fail the types or checks you can see, and list them.
-3. Write `crew/<run>/merged.md`: counts per worker, conflicts, dropped rows.
-4. Tell the user the totals (rows to add and change, per worker), the conflicts,
-   and a short sample with sources.
-5. Land **one batch per worker**, so History names who found what:
-   `mcp__serro__propose_dataset_edit(dataset_id, verb: "row_upsert", rows)` with
-   that worker's rows (up to 200; split larger sets), then
+3. Build each worker's batch. **Every row in a batch sets the same columns, and a
+   `null` clears a cell**, so for each column in the batch:
+   - an **existing row** with no new value for it gets its **current value**
+     (from step 3 of setup), including conflicted cells;
+   - a **new row** with no value for it gets `null`.
+   Never send `null` over a value that is already there.
+4. Write `crew/<run>/merged.md`: counts per worker, conflicts, dropped rows.
+5. Land **one batch per worker**, so History names who found what. For each:
+   `mcp__serro__propose_dataset_edit(dataset_id, verb: "row_upsert", rows)` (up
+   to 200 rows; split larger sets). If Serro refuses it, it names the failing
+   rows and checks: fix or drop them and propose again.
+6. Show the user what the proposals returned: rows added and changed per worker,
+   the changes as a before → after sample with sources, and the conflicts. Ask
+   whether to apply them, and **wait for their answer**. Don't propose and
+   confirm in the same turn, unless a result says the user already allowed edits
+   to this dataset without asking.
+7. When they say yes, confirm each batch with that worker's id:
    `mcp__serro__confirm_dataset_edit(dataset_id, proposal_id, agent_id: <that
-   worker's agent_id>)`. The user approves the first batch in their app and can
-   allow the rest for the session. If Serro refuses a batch, it names the
-   failing rows and checks: fix or drop them and propose again.
-6. Append the outcome to `crew/<run>/status.log` and `program_leave`.
+   worker's agent_id>)`. Their app may also ask them to approve, and can offer to
+   allow the rest for the session. A proposal expires after an hour; if one
+   expired or the dataset changed meanwhile, propose it again.
+8. Append the outcome to `crew/<run>/status.log` and `program_leave`.
 
 ## Report
 
+Use what each confirm returned; don't name version numbers.
+
 ```
 CREW <run> — dataset <name>
-worker-1  <area>  +<added> ~<changed>  v<version>
-worker-2  <area>  +<added> ~<changed>  v<version>
+worker-1  <area>  <Serro's summary, e.g. "added 6 rows and changed 18">
+worker-2  <area>  <Serro's summary>
 Conflicts left for you: <n> (see crew/<run>/merged.md)
 Dropped: <n> — <reasons>
 ```
@@ -107,5 +134,5 @@ kept for 7 days), so another agent can pick up where this run stopped.
 
 - Never write rows outside your claimed area, and never write without the fence
   of a lease you hold.
-- Never invent a value to complete a row. Empty is fine.
-- The user approves every dataset change. Don't route around that prompt.
+- Never invent a value to complete a row, and never clear a value that is there.
+- The user approves every dataset change. Don't route around that.
