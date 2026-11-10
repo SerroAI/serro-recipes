@@ -19,8 +19,17 @@ import { join } from 'node:path';
 const ROOT = join(import.meta.dir, '..');
 const CATALOG = join(ROOT, 'catalog.json');
 
-const explicit = process.argv.slice(2).find(a => /^[0-9a-f]{40}$/.test(a));
-const useLocal = process.argv.includes('--local');
+const args = process.argv.slice(2);
+const explicit = args.find(a => /^[0-9a-f]{40}$/.test(a));
+const useLocal = args.includes('--local');
+// A short or mistyped sha must not silently fall through to origin/main.
+const unknown = args.filter(a => a !== '--local' && a !== explicit);
+if (unknown.length > 0) {
+  console.error(
+    `Unrecognised argument(s): ${unknown.join(' ')}. Pass a full 40-character lowercase sha, --local, or nothing (origin/main).`
+  );
+  process.exit(1);
+}
 
 function git(args: string[]): string {
   const r = Bun.spawnSync(['git', ...args], { cwd: ROOT });

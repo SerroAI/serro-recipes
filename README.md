@@ -259,9 +259,10 @@ Open the PR against **`staging`**, not `main`; see "Staging first, then main" be
    "Related guides" (the page renders those). To ship a workflow without
    Archon too, add `skills/<slug>/SKILL.md` and an `agentSkill: { "invoke": "…" }`
    field, and list the runtimes it reaches in `targets`.
-5. Pin it after your commit lands on `staging`, to that merge commit:
-   `bun scripts/pin-sha.ts <merge sha> && bun scripts/build-registry.ts && bun scripts/lint-registry.ts --network`.
-   Pass the sha: with no argument `pin-sha.ts` pins to `origin/main`.
+5. Pin it after your commit lands on `staging`, to that merge commit's full
+   40-character sha:
+   `bun scripts/pin-sha.ts <full merge sha> && bun scripts/build-registry.ts && bun scripts/lint-registry.ts --network`.
+   With no argument `pin-sha.ts` pins to `origin/main`; a short sha is rejected.
    Until the pin moves, a new Agent Skill edition does not exist at the pinned
    commit: the Serro MCP falls back to the Archon bundle for it, and consumers
    should not sync that catalog yet.
@@ -288,11 +289,13 @@ Recipe changes go to the **`staging`** branch first. Serro's staging MCP reads
 `catalog.json` from `staging` (kgqa's `RECIPES_CATALOG_REF`); production, the
 Archon CLI and `npx skills add` read `main`.
 
-1. Open your PR against `staging`, merge it, then pin `staging` to the merge
-   commit: `bun scripts/pin-sha.ts <sha> && bun scripts/build-registry.ts && bun scripts/lint-registry.ts --network`,
-   in a second PR against `staging`.
+1. Open your PR against `staging` and merge it (merge commit **A**). Then pin
+   `staging` to A in a second PR against `staging`:
+   `bun scripts/pin-sha.ts <full sha of A> && bun scripts/build-registry.ts && bun scripts/lint-registry.ts --network`.
+   Merge that too (merge commit **B**).
 2. Test on staging (gallery, public guides, MCP `get_workflow`). Sync btnextjs
-   staging to that commit with `scripts/sync-recipes.ts --ref <sha>`.
+   staging to **B**, whose catalog carries the new pins:
+   `npx tsx scripts/sync-recipes.ts --ref <full sha of B>` (in btnextjs).
 3. Promote with a PR from `staging` to `main` (it needs an approving review),
    merged with **Create a merge commit**. Squash and rebase both write new
    commits, so the pinned staging commits would not be on `main`.
