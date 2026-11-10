@@ -77,8 +77,10 @@ proposal: don't confirm (the proposal simply expires) and take another unit.
 Do this even when edits to the board are allowed without asking.
 
 **Reading the whole board.** `mcp__serro__query_dataset` returns at most 200 rows
-(50 by default) and says `truncated` when there are more. Page with `LIMIT` and
-`OFFSET` until it isn't, or ask about specific units with `WHERE unit IN (...)`.
+(50 by default). To read everything, pass `limit: 200` and page in the SQL with
+a stable order: `... ORDER BY unit LIMIT 200 OFFSET <0, 200, 400, ...>`, until a
+page comes back with fewer than 200 rows. Don't stop on `truncated`: it only
+describes one page. To check specific units, ask `WHERE unit IN (...)` instead.
 
 ## Seed the board
 

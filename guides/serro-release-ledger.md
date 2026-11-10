@@ -21,7 +21,7 @@ The skill includes the ledger's schema; you create it once in Ask Serro.
    milestone, a label or a commit range, merged ones included), reads the
    ledger, and refreshes each PR's live checks and review state. It fully
    assesses only PRs that are missing, whose head commit changed, or whose
-   checks or reviews got worse since their verdict. Subagents can take one PR
+   checks or reviews changed, for better or worse, since their verdict. Subagents can take one PR
    each. It needs live GitHub access, such as the `gh` CLI.
 3. **Answer GO or NO-GO.** It reports what blocks the release, high-risk PRs that
    are otherwise ready, and which verdicts it reused versus re-assessed.

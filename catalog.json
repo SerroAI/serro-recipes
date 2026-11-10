@@ -797,7 +797,7 @@
       "requires": [
         "Serro MCP connected, with datasets enabled for your workspace (beta)",
         "Its board is created once in Ask Serro from the schema in the skill (declared datasets, beta)",
-        "GitHub access for the PRs (the gh CLI, or GitHub connected to Serro)"
+        "Live GitHub access for the PRs: the gh CLI, the GitHub API or a GitHub connector in your agent app"
       ],
       "writes": "Rows in the release ledger: one verdict per PR at a commit, after you approve. It never merges or deploys.",
       "outputs": [

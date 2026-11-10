@@ -71,8 +71,10 @@ commits or check results; if you have nothing live, say so and stop rather than
 writing verdicts.
 
 **Reading the whole ledger.** `mcp__serro__query_dataset` returns at most 200
-rows (50 by default) and says `truncated` when there are more. Page with
-`LIMIT` and `OFFSET` until it isn't before deciding a PR is missing.
+rows (50 by default). Before deciding a PR is missing, read all of the release:
+pass `limit: 200` and page in the SQL (`ORDER BY pr LIMIT 200 OFFSET <0, 200,
+...>`) until a page has fewer than 200 rows. Don't stop on `truncated`: it only
+describes one page.
 
 ## Assess a PR
 
@@ -89,7 +91,9 @@ rows (50 by default) and says `truncated` when there are more. Page with
    low, medium or high, with one line on why.
 4. Upsert `{release, pr, title, author, verdict, risk, blockers, evidence,
    head_sha, merged, assessed_at, assessed_by}`. Keep `evidence` short and
-   checkable: check names, test files, risk ids, decision ids.
+   checkable, and always include the live state you judged: the checks'
+   results, the review decision and mergeability, then test files, risk ids
+   and decision ids. That's what the next run compares against.
 
 ## Is the release ready?
 
@@ -98,16 +102,19 @@ rows (50 by default) and says `truncated` when there are more. Page with
    (`gh pr list --state all --limit 1000 --search "milestone:<x>"`; if it returns
    the limit, narrow the search and repeat), a commit range between the last
    release tag and the branch to cut, or a list.
-2. Read the ledger for the release, paged until not `truncated`:
-   `SELECT * FROM ds WHERE release = '<release>' ORDER BY pr LIMIT 200 OFFSET <n>`.
+2. Read the ledger for the release, all pages (see **Reading the whole
+   ledger**): `SELECT * FROM ds WHERE release = '<release>' ORDER BY pr LIMIT 200 OFFSET <n>`.
 3. Refresh the live state of **every** PR in the release (head commit, checks,
    review decision, mergeability): it's cheap, and a verdict can go stale at the
-   same commit when CI is re-run or a reviewer requests changes.
+   same commit in either direction: CI re-run red or green, changes requested or
+   approved, a conflict appearing or resolved.
 4. Work out what needs assessing, and only assess those:
    - **missing:** in the release, not in the ledger
    - **stale:** the PR's current head commit isn't the ledger's `head_sha`
-   - **worse since:** same commit, but checks now fail, changes were requested,
-     or it no longer merges cleanly: re-assess, never report the old `ready`
+   - **moved since:** same commit, but the checks, review decision or
+     mergeability differ from what the row's `evidence` recorded, better or
+     worse: re-assess, so a fixed blocker stops holding the release and a new
+     one is never hidden behind an old `ready`
    - **dropped:** in the ledger, no longer in the release (mark `excluded`, ask
      first)
 5. Assess those PRs as above (subagents can take one PR each; the ledger takes
