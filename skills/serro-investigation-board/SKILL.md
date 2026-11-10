@@ -58,6 +58,15 @@ change; confirm with `mcp__serro__confirm_dataset_edit` after their yes, or righ
 away if they already allowed edits to this board (suggest it for the session).
 If Serro says the row changed since you looked, re-read it before acting.
 
+Times are UTC in ISO 8601, for example `date -u +%Y-%m-%dT%H:%M:%SZ`; Serro
+refuses other offsets.
+
+**Claiming safely.** Serro only refuses a confirm when the row changed *after*
+your proposal, so check the proposal's preview: confirm a claim only when it
+shows `status` changing **from `open`**. Otherwise someone claimed it between
+your read and your proposal: don't confirm, and pick another hypothesis. Do
+this even when edits to the board are allowed without asking.
+
 ## Join an investigation
 
 1. Read the board for it:
@@ -71,13 +80,14 @@ If Serro says the row changed since you looked, re-read it before acting.
 4. Add hypotheses the board is missing, as `status: open`. Each is one
    falsifiable sentence with the cheapest test that would kill it. Use Serro
    context for leads: `mcp__serro__search_meetings`, `mcp__serro__search_slack`,
-   `mcp__serro__get_program_decisions`, recent PRs (`mcp__serro__search_prs`).
+   `mcp__serro__get_program_decisions`, recent PRs (`mcp__serro__search_github` with `result_type: "prs"`).
 
 ## Test a hypothesis
 
 1. Claim it: upsert `{investigation, hypothesis_id, status: "testing", owner:
-   <user's email>, agent: <your app>, test: <plan>, updated_at}`. If Serro
-   refuses because the row changed, someone else claimed it: pick another.
+   <user's email>, agent: <your app, plus the subagent's name if you are one>,
+   test: <plan>, updated_at}`, and confirm only as described in **Claiming
+   safely**. If it isn't clean, or Serro refuses it, pick another.
 2. Run the cheapest decisive test. Prefer one that can only pass if the
    hypothesis is false.
 3. Record the verdict: `{..., status: "ruled_out" | "confirmed", evidence: <the

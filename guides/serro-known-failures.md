@@ -39,5 +39,6 @@ Kind: broken · open since Aug 14 · seen 23 times
 Cause: the guard counts calls from a module another test imports first.
 Workaround: run the file alone, or ignore it; it fails on staging too.
 
-Recording the occurrence (23 → 24). Apply it?
+Recording the occurrence (23 → 24; the proposal confirms nobody else counted
+one in between). Apply it?
 ```

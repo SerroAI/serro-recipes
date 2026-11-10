@@ -17,10 +17,12 @@ The skill includes the ledger's schema; you create it once in Ask Serro.
    that must happen in order at deploy. It records a verdict (ready, needs work,
    blocked or excluded), a risk level, blockers and evidence, tied to the PR's
    head commit.
-2. **Ask if the release is ready.** It lists the release's PRs (a milestone, a
-   label or a commit range), reads the ledger, and assesses only PRs that are
-   missing or whose head commit changed since their verdict. Subagents can take
-   one PR each.
+2. **Ask if the release is ready.** It lists every PR in the release (a
+   milestone, a label or a commit range, merged ones included), reads the
+   ledger, and refreshes each PR's live checks and review state. It fully
+   assesses only PRs that are missing, whose head commit changed, or whose
+   checks or reviews got worse since their verdict. Subagents can take one PR
+   each. It needs live GitHub access, such as the `gh` CLI.
 3. **Answer GO or NO-GO.** It reports what blocks the release, high-risk PRs that
    are otherwise ready, and which verdicts it reused versus re-assessed.
 
@@ -34,8 +36,9 @@ _Illustrative example for a fictional program. A real run uses your own program'
 ```markdown
 **User:** Is 2026.11.2 ready?
 
-**Agent:** 18 PRs in the milestone. The ledger had 15; 2 changed since they were
-assessed and 3 were missing, so I assessed 5 and reused 13.
+**Agent:** 18 PRs in the milestone (merged ones included). The ledger had 15;
+2 changed since they were assessed and 3 were missing. Live checks and reviews
+are unchanged for the rest, so I assessed 5 and reused 13.
 
 RELEASE 2026.11.2: NO-GO
 15 ready, 1 needs work, 1 blocked, 1 excluded   (5 re-assessed this run)

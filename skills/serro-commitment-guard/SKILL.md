@@ -94,6 +94,9 @@ rows; confirm with `mcp__serro__confirm_dataset_edit` after their yes. The ledge
 records facts product will rely on: always wait for the yes unless the user
 already allowed edits to it.
 
+Times are UTC in ISO 8601, for example `date -u +%Y-%m-%dT%H:%M:%SZ`; Serro
+refuses other offsets.
+
 Tell the user when a PR fully delivers a committed ask: product may want to
 mark it shipped in Serro. Don't do that yourself.
 

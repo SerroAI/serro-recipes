@@ -60,10 +60,23 @@ their yes, or right away if they already allowed edits to this ledger. If Serro
 says a row changed since you looked, another agent assessed it meanwhile: re-read
 and keep the newer assessment unless yours is at a newer commit.
 
+Times are UTC in ISO 8601, for example `date -u +%Y-%m-%dT%H:%M:%SZ`; Serro
+refuses other offsets.
+
+**Live GitHub is required** for an assessment: the head commit, checks, review
+decision and mergeability must be read live, with the `gh` CLI (or the GitHub
+API or a GitHub connector). Serro's `mcp__serro__search_github` (`result_type:
+"prs"`) is good for finding PRs and their context, but it doesn't give live head
+commits or check results; if you have nothing live, say so and stop rather than
+writing verdicts.
+
+**Reading the whole ledger.** `mcp__serro__query_dataset` returns at most 200
+rows (50 by default) and says `truncated` when there are more. Page with
+`LIMIT` and `OFFSET` until it isn't before deciding a PR is missing.
+
 ## Assess a PR
 
-1. Get the PR: `gh pr view <n> --json number,title,author,headRefOid,mergeable,statusCheckRollup,reviewDecision,files`
-   if `gh` is available, otherwise `mcp__serro__search_prs`.
+1. Get the PR live: `gh pr view <n> --json number,title,author,headRefOid,mergeable,statusCheckRollup,reviewDecision,files`.
 2. Judge it on evidence, not on the description:
    - **CI and tests:** failing or missing checks; tests for the changed behavior.
    - **Review:** approved, changes requested, or unreviewed.
@@ -80,18 +93,26 @@ and keep the newer assessment unless yours is at a newer commit.
 
 ## Is the release ready?
 
-1. Get the release's PRs from the user's definition: a milestone or label
-   (`gh pr list --search "milestone:<x>"`), a commit range between the last
+1. Get **all** the release's PRs from the user's definition, merged ones
+   included: a milestone or label
+   (`gh pr list --state all --limit 1000 --search "milestone:<x>"`; if it returns
+   the limit, narrow the search and repeat), a commit range between the last
    release tag and the branch to cut, or a list.
-2. Read the ledger: `SELECT * FROM ds WHERE release = '<release>'`.
-3. Work out what needs assessing, and only assess those:
+2. Read the ledger for the release, paged until not `truncated`:
+   `SELECT * FROM ds WHERE release = '<release>' ORDER BY pr LIMIT 200 OFFSET <n>`.
+3. Refresh the live state of **every** PR in the release (head commit, checks,
+   review decision, mergeability): it's cheap, and a verdict can go stale at the
+   same commit when CI is re-run or a reviewer requests changes.
+4. Work out what needs assessing, and only assess those:
    - **missing:** in the release, not in the ledger
    - **stale:** the PR's current head commit isn't the ledger's `head_sha`
+   - **worse since:** same commit, but checks now fail, changes were requested,
+     or it no longer merges cleanly: re-assess, never report the old `ready`
    - **dropped:** in the ledger, no longer in the release (mark `excluded`, ask
      first)
-4. Assess the missing and stale PRs as above (subagents can take one PR each;
-   the ledger takes all their rows) and write them back in one batch.
-5. Report:
+5. Assess those PRs as above (subagents can take one PR each; the ledger takes
+   all their rows) and write them back in one batch.
+6. Report:
 
 ```
 RELEASE <release>: GO | NO-GO

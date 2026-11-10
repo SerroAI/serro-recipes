@@ -22,7 +22,7 @@ One dataset per program. If it doesn't exist, give the user this to paste into
 ```json
 {
   "columns": [
-    {"name": "run_id", "type": "VARCHAR", "maintained_by": "curated", "description": "<suite>-<yyyymmdd-hhmmss>-<short sha>"},
+    {"name": "run_id", "type": "VARCHAR", "maintained_by": "curated", "description": "<suite>-<yyyymmddThhmmssZ>-<short sha>-<6 random hex>"},
     {"name": "suite", "type": "VARCHAR", "maintained_by": "curated", "description": "Eval suite or benchmark name"},
     {"name": "model", "type": "VARCHAR", "maintained_by": "curated"},
     {"name": "prompt_version", "type": "VARCHAR", "maintained_by": "curated", "description": "Prompt file hash, version tag or branch"},
@@ -56,8 +56,11 @@ and `mcp__serro__describe_dataset(dataset_id)`. Writing needs `row_upsert` in
 
 1. Run the suite the way the repo does (or use the output the user just got).
    Read the numbers from the tool's output or results file, never from memory.
-2. Fill what you can: `suite`, `model`, `prompt_version` (a hash of the prompt
-   files, or the tag), `git_sha`, `score`, `passed`/`total`, `cost_usd`,
+2. Make the `run_id` unique even when teammates run the same suite at the same
+   commit in the same second: `<suite>-<UTC yyyymmddThhmmssZ>-<short sha>-<6
+   random hex>` (for example from `openssl rand -hex 3`).
+   Fill what you can: `suite`, `model`, `prompt_version` (a hash of the
+   prompt files, or the tag), `git_sha`, `score`, `passed`/`total`, `cost_usd`,
    `p50_latency_ms`, `run_at`, `run_by`, and `notes` (what this run changes, and
    the failures worth reading). Leave out what the output doesn't give you.
 3. Compare before writing:
@@ -65,7 +68,12 @@ and `mcp__serro__describe_dataset(dataset_id)`. Writing needs `row_upsert` in
 4. Upsert the row: `mcp__serro__propose_dataset_edit(dataset_id, verb:
    "row_upsert", rows: [<run>])`; show the user the row and the comparison;
    confirm with `mcp__serro__confirm_dataset_edit` after their yes, or right away
-   if they already allowed edits to this log.
+   if they already allowed edits to this log. The preview must show the row as
+   added; if it would change an existing run, the `run_id` collided: make a new
+   one.
+
+   Times are UTC in ISO 8601, for example `date -u +%Y-%m-%dT%H:%M:%SZ`; Serro
+   refuses other offsets.
 
 ```
 EVAL <suite> — <model>, prompt <version> @ <sha>

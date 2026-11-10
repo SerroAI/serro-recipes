@@ -65,6 +65,21 @@ after their yes (right away if they already allowed edits to this board). Never
 send `null` over a value someone else wrote. If Serro says the row changed since
 you looked, someone else got there first: re-read it and act on what it says now.
 
+Times are UTC in ISO 8601, for example `date -u +%Y-%m-%dT%H:%M:%SZ`; Serro
+refuses other offsets.
+
+**Claiming safely.** Serro only refuses a confirm when the row changed *after*
+your proposal, so check the proposal itself: its preview lists each changed
+column with its `before` value. Confirm a claim only when the preview shows
+`status` changing **from `todo`**. If `status` isn't in the changes, or its
+`before` is anything else, someone claimed it between your read and your
+proposal: don't confirm (the proposal simply expires) and take another unit.
+Do this even when edits to the board are allowed without asking.
+
+**Reading the whole board.** `mcp__serro__query_dataset` returns at most 200 rows
+(50 by default) and says `truncated` when there are more. Page with `LIMIT` and
+`OFFSET` until it isn't, or ask about specific units with `WHERE unit IN (...)`.
+
 ## Seed the board
 
 When the user starts a migration:
@@ -72,10 +87,14 @@ When the user starts a migration:
 1. Find every unit with a command they can re-run, for example
    `rg -l "from '@radix-ui/themes'" src`. Say the command in the report and in
    `notes` of the first row, so the next seed finds the same set.
-2. Read the board (`mcp__serro__query_dataset`: `SELECT unit, status FROM ds`)
-   and add only units that aren't there, as `status: todo` with an `area`, in
-   batches of up to 200.
-3. Units on the board that the command no longer finds and that are still
+2. Find which of those units are already on the board, by asking in chunks
+   (`SELECT unit FROM ds WHERE unit IN ('a', 'b', ...)`), never from one
+   unpaged read. Add only units that aren't there, as `status: todo` with an
+   `area`, in batches of up to 200.
+3. Before confirming a seed batch, check its preview: it must only add rows
+   (`updates: 0`). If it would change any existing row, something was missed in
+   step 2: don't confirm; re-check those units.
+4. Units on the board that the command no longer finds and that are still
    `todo`: list them and ask before marking them `done` or `wont_do`.
 
 ## Pick up the next unit
@@ -84,8 +103,9 @@ When the user starts a migration:
    `SELECT unit, area, notes FROM ds WHERE status = 'todo' ORDER BY area, unit LIMIT 10`.
    Respect a unit or area the user names.
 2. Claim it: upsert `{unit, status: "in_progress", owner: <user's email>, agent:
-   <your app>, updated_at: <now>}`. If Serro refuses because the row changed,
-   another agent claimed it: take the next one.
+   <your app and, for a subagent, its name, e.g. "Claude Code / worker-2">,
+   updated_at: <now>}`, and confirm only as described in **Claiming safely**.
+   If the claim isn't clean, or Serro refuses it, take the next unit.
 3. Do the migration for that unit only, in a branch. Run the checks the repo
    uses.
 4. When the PR is open: upsert `{unit, status: "in_review", branch, pr_url,
@@ -97,8 +117,8 @@ When the user starts a migration:
    is the one time `null` is right.
 
 **Fanning out.** One person can run several units at once: start a subagent per
-unit, each claiming its own row the same way. The claim is the lock: two agents
-can't both move the same `todo` row to `in_progress`. If Agent Exchange is enabled,
+unit, each claiming its own row the same way and checking its proposal before
+confirming, so two agents never both take the same `todo` row. If Agent Exchange is enabled,
 the lead may also `mcp__serro__program_join` and have each subagent join, so
 `program_who` shows who is on what live; the board stays the record.
 

@@ -90,14 +90,20 @@ Example: `src/tests/unit/ses-test-guard.test.ts > blocks real SES :: AssertionEr
 
 **Recording an occurrence.** Upsert `{signature, occurrences: <current + 1>,
 last_seen: <now>, last_seen_by: <user's email>}`, using the count you just read.
-If Serro says the row changed since you looked, re-read and add one to the new
-count. Do this once per failing run, not per retry.
+Before confirming, check the proposal's preview: `occurrences` must change
+**from** the count you read. If its `before` is higher, another agent recorded
+an occurrence in between: don't confirm; propose again with that count plus one.
+If Serro says the row changed since you looked, re-read and do the same. Do this
+once per failing run, not per retry.
 
 **How every write works.** `mcp__serro__propose_dataset_edit(dataset_id, verb:
 "row_upsert", rows)` with the key and only the columns you set; show the user the
 change; confirm with `mcp__serro__confirm_dataset_edit` after their yes, or right
 away if they already allowed edits to this ledger. Suggest allowing it for the
 session: occurrences are small, frequent writes.
+
+Times are UTC in ISO 8601, for example `date -u +%Y-%m-%dT%H:%M:%SZ`; Serro
+refuses other offsets.
 
 ## After a fix
 

@@ -18,7 +18,8 @@ The skill includes the board's schema; you create it once in Ask Serro.
    in Serro.
 3. **Claim and test.** An agent claims a hypothesis, runs the decisive test and
    records the verdict with its evidence. Serro refuses a verdict without
-   evidence, and refuses a claim on a hypothesis someone else just took.
+   evidence, and the agent drops a claim if someone else took the hypothesis
+   first.
 4. **Fan out.** One person can start a subagent per open hypothesis; teammates'
    agents join the same board.
 5. **Close.** When a confirmed hypothesis explains every symptom, the root cause

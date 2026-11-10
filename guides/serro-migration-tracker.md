@@ -16,8 +16,9 @@ The skill includes the board's schema; you create it once in Ask Serro.
    example, every file still importing an old library) and adds the new ones to
    the board as `todo`.
 2. **Pick and claim.** Any agent takes the next open unit and marks it
-   `in_progress` with your name. The claim is the lock: if another agent claimed
-   it first, Serro refuses the second claim and the agent takes the next unit.
+   `in_progress` with your name. Before confirming, it checks that the change
+   really moves the unit from `todo`; if another agent claimed it in between, it
+   drops the claim and takes the next unit, so two agents never work one unit.
 3. **Work and record.** It migrates that unit in a branch, opens the PR, and
    moves the row to `in_review` with the PR link, then `done` when it merges. If
    it gets stuck, the row says `blocked` and why.
