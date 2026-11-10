@@ -23,8 +23,8 @@ Serro, or use **Create dataset** on a widget's table, first.
    or every refresh rebuilds it), the agent says why and stops before doing any
    work. It reads the rows already there to tell new rows from gaps.
 3. **Gathers rows.** Each value comes from a source it can name. It never
-   guesses, and it never clears a value that is already there: a new row's
-   unsourced column stays empty, and an existing row keeps its current value. On
+   guesses, and it only sends values it found: rows are grouped by the columns
+   they set, so a value already in the dataset is never cleared or rewritten. On
    a dataset with a declared schema, it prefers curated columns, because Serro's
    refresh overwrites the others.
 4. **Proposes, then asks you.** It proposes one batch of up to 200 rows.
@@ -59,7 +59,8 @@ _Illustrative example for a fictional program. A real run uses your own program'
 
 I can fill 18 owners (from CODEOWNERS) and 24 runbooks (from each service's
 README). 3 owners stay empty: their CODEOWNERS entry is a team alias, not a person.
-Serro accepted the batch: 27 rows changed. Before → after (sample):
+Serro accepted 2 batches (15 rows set owner and runbook, 12 set runbook only):
+27 rows changed. Before → after (sample):
 | service | owner | runbook | sources |
 | payments-api | — → priya@acme.dev | — → docs/runbooks/payments.md | CODEOWNERS:12, README |
 Apply it?

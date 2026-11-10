@@ -29,7 +29,7 @@ the lead works through the areas itself, one after another.
 4. **The lead merges.** Rows with the same key are combined. When workers
    disagree and neither source is clearly stronger, the cell is left as it is
    and listed for you. Values already in the dataset are never cleared.
-5. **You approve.** The lead proposes one batch per worker, shows you what each
+5. **You approve.** The lead proposes each worker's rows as their own batches, shows you what each
    adds and changes, and waits for your yes. Your app may ask you to approve as
    well and can let you allow the rest for the session. Each batch is one
    dataset version, credited to its worker, for example "added 40 rows · via

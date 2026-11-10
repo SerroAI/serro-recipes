@@ -55,8 +55,8 @@ Read what `refresh` means for your edits:
 
 Then read what is already there: `mcp__serro__get_dataset` for a page of rows
 and a per-column profile, or `mcp__serro__query_dataset` with one read-only SQL
-SELECT (for example, which keys have an empty `owner`). Keep the current values
-of every row you might touch: you need them in step 3.
+SELECT (for example, which keys have an empty `owner`). Note which keys already
+exist and what their cells hold now.
 
 ## 3. Gather rows
 
@@ -73,14 +73,16 @@ config, git history), Serro's tools (`mcp__serro__search_jira`,
   existing values), enums spelled exactly as existing rows spell them. Keys
   exactly as the dataset holds them.
 
-**Every row in a batch sets the same columns, and a `null` clears a cell.** So:
+**Every row in a batch sets the same columns, and a `null` clears a cell.** So
+only ever send values you found, and never pad a row with values you didn't:
 
-- For an **existing row**, any column in the batch that you found nothing new
-  for gets its **current value**, copied from what you read in step 2. Never send
-  `null` over a value that is already there.
-- For a **new row**, a column you have no source for is `null`.
-- If rows need very different columns, split them into batches by the columns
-  they set rather than padding.
+- **Group rows by the columns they set.** Rows where you found `owner` and
+  `runbook` go in one batch; rows where you found only `owner` go in another,
+  with just the key and `owner`. Never copy a current value into a batch: the
+  values you read may be clipped (long cells come back cut at 1,000 characters)
+  or stale by the time the batch applies.
+- A **new row** may leave out columns you have no source for; they start empty.
+- Send `null` only to clear a cell on purpose, when the user asked for that.
 
 ## 4. Propose, show, wait
 
@@ -96,7 +98,9 @@ proposed and the reply names each failing row and check. Fix those rows (or drop
 them and say why) and propose again. More than 200 rows means several batches,
 each its own proposal.
 
-When the proposal is accepted, show the user what it returned: rows added and
+When the proposal is accepted, check what it returned: every changed cell
+should be one you meant to change. If anything else changes, don't go on; find
+out why. Then show the user what it returned: rows added and
 changed, and the changes as a before → after table (a sample if there are many),
 with your sources. Then ask whether to apply it, and **wait for their answer**.
 Don't propose and confirm in the same turn. The one exception: the result says
@@ -108,8 +112,10 @@ right away and tell them what changed.
 When the user says yes: `mcp__serro__confirm_dataset_edit(dataset_id,
 proposal_id)`. Their app may also ask them to approve the change, and can offer
 to allow edits to this dataset for the session or for an hour. A proposal
-expires after an hour; if it expired, or the dataset changed meanwhile, propose
-again.
+expires after an hour; if it expired, propose again. If Serro says a row changed
+since you looked, someone else edited it: re-read those rows, and if they now
+hold a value different from the one you were about to replace, show the user
+before proposing again rather than overwriting their edit.
 
 If the user declines, stop and ask what to change. Don't re-propose the same rows.
 
