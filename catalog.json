@@ -583,6 +583,80 @@
         "The decision quoted with its date and rationale",
         "For a reversal: what it constrains and who needs to agree"
       ]
+    },
+    {
+      "slug": "serro-dataset-fill",
+      "kind": "agent-skill",
+      "name": "Dataset Fill",
+      "author": "SerroAI",
+      "tagline": "Fill a Serro dataset from evidence your agent can reach, with a source for every value.",
+      "description": "Reads a dataset's declared columns, key and checks, gathers rows from the repo, tickets, docs and meetings, and lands them as one batch you approve. Curated columns first; unknown values stay empty instead of guessed.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-dataset-fill",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "datasets",
+        "automation"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "\"fill the dataset\", \"populate this table in Serro\", \"backfill the owner column\", or a dataset named with a source to fill it from.",
+      "requires": [
+        "Serro MCP connected, with datasets enabled for your workspace (beta)",
+        "A dataset that already exists in a program you can edit; create it in Serro first",
+        "An agent app that can show Serro's approval prompt (for example Claude Code)"
+      ],
+      "writes": "Rows in the dataset you name, as one new version, only after you approve the batch.",
+      "outputs": [
+        "Rows added and changed, as one dataset version credited to your agent",
+        "Which values were left empty for lack of a source, and which rows were skipped",
+        "Where each value came from"
+      ]
+    },
+    {
+      "slug": "serro-agent-crew",
+      "kind": "agent-skill",
+      "name": "Agent Crew",
+      "author": "SerroAI",
+      "tagline": "Split a big sweep across subagents that coordinate in Serro, then fill a dataset together.",
+      "description": "Your agent leads a small crew: it splits the work into areas, subagents each claim one in the program's Agent Exchange workspace and write their findings there, and the lead merges them by key and lands one approved batch per worker, so the dataset's History shows who found what.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-agent-crew",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "multi-agent",
+        "datasets",
+        "automation"
+      ],
+      "targets": [
+        "claude-code",
+        "codex"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "\"fan out\", \"split this across agents\", \"have several agents fill the dataset\", or a sweep over many repos, services or ticket projects.",
+      "requires": [
+        "Serro MCP connected, with Agent Exchange and datasets enabled for your workspace (beta)",
+        "A dataset that already exists in a program where you are a contributor",
+        "An agent app with subagents (Claude Code, Codex); without them it runs the areas one by one"
+      ],
+      "writes": "Working files under crew/<run>/ in the program's agent workspace, and dataset rows only after you approve each batch.",
+      "outputs": [
+        "Rows added and changed per worker, each batch credited to that worker in History",
+        "A merge report: conflicts left for you and rows dropped, with reasons",
+        "The crew's plan, per-area rows and notes, kept in the program workspace"
+      ]
     }
   ]
 }

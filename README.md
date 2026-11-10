@@ -252,6 +252,8 @@ Open the PR against **`staging`**, not `main`; see "Staging first, then main" be
    `targets` and the presentation fields every surface renders: `tagline`,
    `requires`, `writes`, `outputs`, `requiresIntegrations`, and where they apply
    `verdicts`, `triggersOn`, `runsInChat`/`chatCaveat` and `addedAt`.
+   Set `"beta": true` for a recipe that depends on a beta Serro feature; the
+   gallery, the guides and the MCP label it Beta.
    `lint-registry.ts` checks them.
 4. Optionally write **`guides/<slug>.md`**, the long-form page shown on Serro's
    public guides: how it reasons, how to run it, how to read the result, and an
