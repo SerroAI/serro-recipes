@@ -590,7 +590,7 @@
       "name": "Dataset Fill",
       "author": "SerroAI",
       "tagline": "Fill a Serro dataset from evidence your agent can reach, with a source for every value.",
-      "description": "Reads a dataset's declared columns, key and checks, gathers rows from the repo, tickets, docs and meetings, and lands them as one batch you approve. Curated columns first; unknown values stay empty instead of guessed.",
+      "description": "Reads a dataset's declared columns, key and checks, gathers rows from the repo, tickets, docs and meetings, and lands them in batches you approve. Curated columns first; it sends only values it found, so unknown values stay empty instead of guessed.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-dataset-fill",
       "sha": "0000000000000000000000000000000000000000",
       "tags": [
@@ -614,7 +614,7 @@
         "A dataset that already exists in a program you can edit; create it in Serro first",
         "An agent app that can show Serro's approval prompt (for example Claude Code)"
       ],
-      "writes": "Rows in the dataset you name, as one new version, only after you approve the batch.",
+      "writes": "Rows in the dataset you name, only after you approve each batch. Each batch is one new version; restoring the version before the first batch undoes the run.",
       "outputs": [
         "Rows added and changed, as one dataset version credited to your agent",
         "Which values were left empty for lack of a source, and which rows were skipped",

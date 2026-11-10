@@ -1,6 +1,6 @@
 ---
 name: serro-dataset-fill
-description: Fill or update rows of a Serro program dataset from evidence your agent can reach (the repo, tickets, docs, meetings), checked against the dataset's declared columns, key and quality checks, and applied as one batch the user approves. Beta. Use when someone asks to "fill the dataset", "populate this table", "add these to the Serro dataset", "backfill the owner column", "update the tracker in Serro from the repo", or names a dataset and a source to fill it from.
+description: Fill or update rows of a Serro program dataset from evidence your agent can reach (the repo, tickets, docs, meetings), checked against the dataset's declared columns, key and quality checks, and applied in batches the user approves. Beta. Use when someone asks to "fill the dataset", "populate this table", "add these to the Serro dataset", "backfill the owner column", "update the tracker in Serro from the repo", or names a dataset and a source to fill it from.
 ---
 
 # Serro Dataset Fill (beta)
@@ -12,7 +12,7 @@ a refresh never overwrites them. Those curated columns are usually empty because
 nobody has had time to fill them. You can reach the evidence that fills them.
 
 Your job: **find the dataset, learn its rules, gather rows with a source for every
-value, and land them as one batch the user approves.** Never guess a value to make
+value, and land them in batches the user approves.** Never guess a value to make
 a row look complete.
 
 Beta: this needs datasets enabled for the workspace and a dataset that already
@@ -132,6 +132,7 @@ Skipped: <key> — <reason>
 Sources: <short list, or where the per-row notes are>
 ```
 
-Don't name version numbers. The batch is one new version, and the dataset's
-**History** shows it as one entry with your app's name. To undo it, the user can
-restore the previous version from the widget's **Versions** tab.
+Don't name version numbers. Each batch is one new version, and the dataset's
+**History** shows each as one entry with your app's name. To undo the whole run,
+the user restores the version from just before your first batch in the widget's
+**Versions** tab; say which batches the run made so they can find it.

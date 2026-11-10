@@ -24,19 +24,23 @@ Serro, or use **Create dataset** on a widget's table, first.
    work. It reads the rows already there to tell new rows from gaps.
 3. **Gathers rows.** Each value comes from a source it can name. It never
    guesses, and it only sends values it found: rows are grouped by the columns
-   they set, so a value already in the dataset is never cleared or rewritten. On
+   they set, so columns it has nothing new for are left exactly as they are. Any
+   filled cell it does propose to change shows up as before → after for you to
+   review. On
    a dataset with a declared schema, it prefers curated columns, because Serro's
    refresh overwrites the others.
-4. **Proposes, then asks you.** It proposes one batch of up to 200 rows.
+4. **Proposes, then asks you.** It proposes one or more batches of up to 200
+   rows (one per set of columns, more if there are over 200 rows).
    Proposing writes nothing. Serro checks every row, and if one fails, nothing
    is proposed and the agent is told which rows failed which checks. Once Serro
    accepts the batch, the agent shows you the rows it adds and the before → after
    changes, and waits for your yes.
 5. **You approve.** Your app may ask you to approve as well, and can let you
-   allow edits to this dataset for the session or for an hour. The batch becomes
-   one new version, and **History** shows it with your agent's name.
+   allow edits to this dataset for the session or for an hour. Each batch
+   becomes one new version, and **History** shows it with your agent's name.
 
-To undo it, restore the previous version from the widget's **Versions** tab.
+To undo a run, restore the version from just before its first batch in the
+widget's **Versions** tab.
 
 ## Good datasets to start with
 
@@ -59,8 +63,8 @@ _Illustrative example for a fictional program. A real run uses your own program'
 
 I can fill 18 owners (from CODEOWNERS) and 24 runbooks (from each service's
 README). 3 owners stay empty: their CODEOWNERS entry is a team alias, not a person.
-Serro accepted 2 batches (15 rows set owner and runbook, 12 set runbook only):
-27 rows changed. Before → after (sample):
+Serro accepted 3 batches (15 rows set owner and runbook, 3 set owner only, 9 set
+runbook only): 27 rows changed. Before → after (sample):
 | service | owner | runbook | sources |
 | payments-api | — → priya@acme.dev | — → docs/runbooks/payments.md | CODEOWNERS:12, README |
 Apply it?

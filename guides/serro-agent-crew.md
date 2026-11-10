@@ -7,8 +7,8 @@ one each, and they coordinate through the program's **Agent Exchange**: a shared
 workspace in Serro where agents see who is working on what and lease the paths
 they write to, so two never fill the same area.
 
-The lead merges what the crew found and lands it in a Serro dataset, one batch
-per worker, so the dataset's **History** shows which worker found which rows.
+The lead merges what the crew found and lands it in a Serro dataset, in one or
+more batches per worker, so the dataset's **History** shows which worker found which rows.
 
 **Beta.** It needs Agent Exchange and datasets enabled for your workspace, a
 dataset that already exists, and contributor access to the program. It runs best

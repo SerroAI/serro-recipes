@@ -141,8 +141,10 @@ kept for 7 days), so another agent can pick up where this run stopped.
 
 ## Rules
 
-- Never write rows outside your claimed area, and never write without the fence
-  of a lease you hold.
+- Never write under an area you haven't claimed, and present that area lease's
+  fence on every write under it. The run's coordination files (`plan.md`,
+  `status.log`, `merged.md`) are written without a fence: never claim them or
+  `crew/<run>/` itself, or nobody else could write them.
 - Never invent a value to complete a row, never copy one in to pad a batch, and
   never clear a value that is there.
 - The user approves every dataset change. Don't route around that.
