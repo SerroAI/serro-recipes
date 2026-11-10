@@ -137,4 +137,7 @@ Don't name version numbers. Each batch is one new version, and the dataset's
 the user can restore the version from just before your first batch in the
 widget's **Versions** tab. Say which batches the run made, and warn that a
 restore also undoes any other edit or refresh since that version: they should
-check **History** between your first and last batch before restoring.
+check **History** between your first and last batch before restoring. If your
+run was the dataset's first fill (it had no rows before), there is no earlier
+version to restore: undoing it means deleting the rows it added, each delete
+proposed and approved separately (`row_delete`).

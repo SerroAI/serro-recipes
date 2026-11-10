@@ -41,7 +41,9 @@ Serro, or use **Create dataset** on a widget's table, first.
 
 To undo a run, restore the version from just before its first batch in the
 widget's **Versions** tab. A restore also undoes anything else changed since
-that version, so check **History** for other people's edits first.
+that version, so check **History** for other people's edits first. A run that
+was the dataset's first fill has no earlier version to go back to; undo it by
+having the agent delete the rows it added, each with your approval.
 
 ## Good datasets to start with
 
