@@ -10,7 +10,8 @@
  * pointing at an unpushed commit installs as a 404. Default therefore reads
  * origin/main rather than whatever is checked out locally.
  *
- * Run this AFTER your change is on main, then commit the registry bump.
+ * Run this AFTER your change is merged (to staging first: pass its merge sha), then
+ * commit the registry bump. With no sha it pins to origin/main.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

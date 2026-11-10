@@ -241,6 +241,8 @@ same scrutiny as any dependency:
 
 V1 publishing is a pull request.
 
+Open the PR against **`staging`**, not `main`; see "Staging first, then main" below.
+
 1. Add the files for your kind:
    - workflow → `recipes/<slug>/<slug>.yaml` plus a `README.md`
    - skill → `skills/<slug>/SKILL.md` (frontmatter `name` **must** equal the slug)
@@ -257,8 +259,9 @@ V1 publishing is a pull request.
    "Related guides" (the page renders those). To ship a workflow without
    Archon too, add `skills/<slug>/SKILL.md` and an `agentSkill: { "invoke": "…" }`
    field, and list the runtimes it reaches in `targets`.
-5. Pin it after your commit lands on `main`:
-   `bun scripts/pin-sha.ts && bun scripts/build-registry.ts && bun scripts/lint-registry.ts --network`.
+5. Pin it after your commit lands on `staging`, to that merge commit:
+   `bun scripts/pin-sha.ts <merge sha> && bun scripts/build-registry.ts && bun scripts/lint-registry.ts --network`.
+   Pass the sha: with no argument `pin-sha.ts` pins to `origin/main`.
    Until the pin moves, a new Agent Skill edition does not exist at the pinned
    commit: the Serro MCP falls back to the Archon bundle for it, and consumers
    should not sync that catalog yet.
@@ -275,8 +278,9 @@ a recipe:
 
 - **Serro's gallery and public guides** (btnextjs) copy them in with
   `scripts/sync-recipes.ts` at a pinned commit. They are never edited there.
-- **The Serro MCP** (`list_workflows`, `get_workflow`) reads `catalog.json` live
-  from `main`, so a merged change reaches agents without a deploy.
+- **The Serro MCP** (`list_workflows`, `get_workflow`) reads `catalog.json` live:
+  production from `main`, staging from `staging`. A merged change reaches agents
+  without a deploy.
 
 ### Staging first, then main
 
@@ -289,9 +293,9 @@ Archon CLI and `npx skills add` read `main`.
    in a second PR against `staging`.
 2. Test on staging (gallery, public guides, MCP `get_workflow`). Sync btnextjs
    staging to that commit with `scripts/sync-recipes.ts --ref <sha>`.
-3. Promote with a PR from `staging` to `main` (it needs an approving review).
-   The pins already point at commits that exist on `main` once it merges, as
-   long as the promotion is a merge commit, not a squash.
+3. Promote with a PR from `staging` to `main` (it needs an approving review),
+   merged with **Create a merge commit**. Squash and rebase both write new
+   commits, so the pinned staging commits would not be on `main`.
 
 ### catalog.json vs workflows.json
 
