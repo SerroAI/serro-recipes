@@ -52,6 +52,7 @@ interface Entry {
   targets: string[];
   archonVersionCompat?: string;
   featured?: boolean;
+  beta?: unknown;
   agentSkill?: { invoke?: string };
   tagline?: string;
   requiresIntegrations?: string[];
@@ -191,6 +192,9 @@ for (const e of entries) {
   }
   if (e.verdicts !== undefined && !(Array.isArray(e.verdicts) && e.verdicts.every(v => v.value && v.meaning))) {
     fail(`${p} verdicts must be [{ value, meaning }]`);
+  }
+  if (e.beta !== undefined && typeof e.beta !== 'boolean') {
+    fail(`${p} beta must be true or false`);
   }
   if (e.runsInChat !== undefined && typeof e.runsInChat !== 'boolean') {
     // The MCP reads this with bool(), so the string "false" would mean true.

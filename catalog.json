@@ -583,6 +583,303 @@
         "The decision quoted with its date and rationale",
         "For a reversal: what it constrains and who needs to agree"
       ]
+    },
+    {
+      "slug": "serro-dataset-fill",
+      "kind": "agent-skill",
+      "name": "Dataset Fill",
+      "author": "SerroAI",
+      "tagline": "Fill a Serro dataset from evidence your agent can reach, with a source for every value.",
+      "description": "Reads a dataset's declared columns, key and checks, gathers rows from the repo, tickets, docs and meetings, and lands them in batches you approve. Curated columns first; it sends only values it found, so unknown values stay empty instead of guessed.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-dataset-fill",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "datasets",
+        "automation"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "\"fill the dataset\", \"populate this table in Serro\", \"backfill the owner column\", or a dataset named with a source to fill it from.",
+      "requires": [
+        "Serro MCP connected, with datasets enabled for your workspace (beta)",
+        "A dataset that already exists in a program you can edit; create it in Serro first",
+        "An agent app that can show Serro's approval prompt (for example Claude Code)"
+      ],
+      "writes": "Rows in the dataset you name, only after you approve each batch. Each batch is one new version.",
+      "outputs": [
+        "Rows added and changed, in one or more batches; each batch is one dataset version credited to your agent",
+        "Which values were left empty for lack of a source, and which rows were skipped",
+        "Where each value came from"
+      ]
+    },
+    {
+      "slug": "serro-agent-crew",
+      "kind": "agent-skill",
+      "name": "Agent Crew",
+      "author": "SerroAI",
+      "tagline": "Split a big sweep across subagents that coordinate in Serro, then fill a dataset together.",
+      "description": "Your agent leads a small crew: it splits the work into areas, subagents each claim one in the program's Agent Exchange workspace and write their findings there, and the lead merges them by key and lands one approved batch per worker, so the dataset's History shows who found what.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-agent-crew",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "multi-agent",
+        "datasets",
+        "automation"
+      ],
+      "targets": [
+        "claude-code",
+        "codex"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "\"fan out\", \"split this across agents\", \"have several agents fill the dataset\", or a sweep over many repos, services or ticket projects.",
+      "requires": [
+        "Serro MCP connected, with Agent Exchange and datasets enabled for your workspace (beta)",
+        "A dataset that already exists in a program where you are a contributor",
+        "An agent app with subagents (Claude Code, Codex); without them it runs the areas one by one"
+      ],
+      "writes": "Working files under crew/<run>/ in the program's agent workspace, and dataset rows only after you approve each batch.",
+      "outputs": [
+        "Rows added and changed per worker, each batch credited to that worker in History",
+        "A merge report: conflicts left for you and rows dropped, with reasons",
+        "The crew's plan, per-area rows and notes, kept in the program workspace"
+      ]
+    },
+    {
+      "slug": "serro-migration-tracker",
+      "kind": "agent-skill",
+      "name": "Migration Tracker",
+      "author": "SerroAI",
+      "tagline": "Run a long migration as a shared board every teammate's agent works from.",
+      "description": "One row per unit of a migration, upgrade or sweep. Any agent picks the next open unit, claims it, does the work and records branch, PR and blockers; the claim is the lock, so two agents never take the same unit. The widget is the team's burn-down.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-migration-tracker",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "multi-agent",
+        "datasets",
+        "development"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "\"migrate the rest of X\", \"pick up the next item in the migration\", \"how far along is the migration\", or any codebase-wide sweep, deprecation or upgrade.",
+      "requires": [
+        "Serro MCP connected, with datasets enabled for your workspace (beta)",
+        "Its board is created once in Ask Serro from the schema in the skill (declared datasets, beta)",
+        "Edit access to the program"
+      ],
+      "writes": "Rows on the migration board: claims, status, branch, PR and blockers, each after you approve. Code changes in your branch, one unit at a time.",
+      "outputs": [
+        "The next unit claimed and migrated, with its PR recorded on the board",
+        "A burn-down by status and area, with stale claims and repeated blockers flagged"
+      ]
+    },
+    {
+      "slug": "serro-known-failures",
+      "kind": "agent-skill",
+      "name": "Known Failures",
+      "author": "SerroAI",
+      "tagline": "Never re-debug a flake someone already understood.",
+      "description": "Before debugging a failing test, build or CI job, your agent checks a shared ledger of known failures in Serro: it reuses the recorded cause and workaround, counts the occurrence, catches regressions of fixed failures, and records new ones once understood.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-known-failures",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "datasets",
+        "development"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "A failing test, build, lint or CI job; \"is this test flaky\", \"is this a known failure\", \"what are our flakiest tests\".",
+      "requires": [
+        "Serro MCP connected, with datasets enabled for your workspace (beta)",
+        "Its board is created once in Ask Serro from the schema in the skill (declared datasets, beta)"
+      ],
+      "writes": "Rows in the known-failures ledger: new failures, occurrences and fixes, each after you approve.",
+      "outputs": [
+        "Whether the failure is known, with its cause and workaround",
+        "A regression warning when a fixed failure comes back",
+        "The flakiest open failures, by occurrences"
+      ]
+    },
+    {
+      "slug": "serro-investigation-board",
+      "kind": "agent-skill",
+      "name": "Investigation Board",
+      "author": "SerroAI",
+      "tagline": "Hunt a hard bug with several agents without anyone retrying a dead end.",
+      "description": "Every hypothesis about a bug is a row on a shared board in Serro, with who is testing it, how, and the evidence that ruled it out or confirmed it. Agents and teammates read the board before testing anything, and the root cause lands with its proof.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-investigation-board",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "multi-agent",
+        "datasets",
+        "incident"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "\"help me investigate\", \"what have we already ruled out\", \"split this debugging across agents\", or a bug that has resisted one agent.",
+      "requires": [
+        "Serro MCP connected, with datasets enabled for your workspace (beta)",
+        "Its board is created once in Ask Serro from the schema in the skill (declared datasets, beta)",
+        "Edit access to the program"
+      ],
+      "writes": "Rows on the investigation board: hypotheses, claims and verdicts with evidence, each after you approve.",
+      "outputs": [
+        "What is confirmed, ruled out (and why), being tested and open",
+        "Hypotheses tested in parallel by subagents",
+        "The root cause with its proof and fix"
+      ]
+    },
+    {
+      "slug": "serro-release-ledger",
+      "kind": "agent-skill",
+      "name": "Release Ledger",
+      "author": "SerroAI",
+      "tagline": "Make \"is the release ready\" a query, not a re-check of every PR.",
+      "description": "One row per PR in a release, with its verdict, blockers, evidence and the commit it was assessed at. Any agent records a PR's readiness; asking whether the release is ready re-assesses only missing or changed PRs and answers GO or NO-GO from the ledger.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-release-ledger",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "datasets",
+        "review"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "\"is release X ready\", \"what's blocking the release\", \"assess this PR for the release\", or preparing a release cut.",
+      "requires": [
+        "Serro MCP connected, with datasets enabled for your workspace (beta)",
+        "Its board is created once in Ask Serro from the schema in the skill (declared datasets, beta)",
+        "Live GitHub access for the PRs: the gh CLI, the GitHub API or a GitHub connector in your agent app"
+      ],
+      "writes": "Rows in the release ledger: one verdict per PR at a commit, after you approve. It never merges or deploys.",
+      "outputs": [
+        "GO or NO-GO for the release, with what blocks it",
+        "Which PRs were re-assessed because they changed, and which verdicts were reused",
+        "High-risk PRs that are otherwise ready"
+      ]
+    },
+    {
+      "slug": "serro-commitment-guard",
+      "kind": "agent-skill",
+      "name": "Commitment Guard",
+      "author": "SerroAI",
+      "tagline": "Check customer promises before changing behavior, and record what each PR did to them.",
+      "description": "Before a behavior change, your agent checks the program's customer requirements in Serro for asks it delivers, changes or puts at risk, and stops for you to decide. After the PR, it records the link in a commitment ledger product can read; a risk is recorded only with the person who accepted it.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-commitment-guard",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "datasets",
+        "planning",
+        "review"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "About to change user-facing behavior, an API, limits or defaults; \"does this break anything we promised\", \"did we deliver X for <customer>\".",
+      "requires": [
+        "Serro MCP connected, with datasets enabled for your workspace (beta)",
+        "Its board is created once in Ask Serro from the schema in the skill (declared datasets, beta) (the ledger; customer requirements are read as they are)"
+      ],
+      "writes": "Rows in the commitment ledger linking PRs to customer asks, after you approve. It never edits customer requirements.",
+      "outputs": [
+        "Which customer asks a change delivers, changes or risks, and for which customers",
+        "A ledger of PRs per ask, with who accepted each risk",
+        "Answers to \"did we deliver X\" and \"what changed for <customer>\""
+      ]
+    },
+    {
+      "slug": "serro-eval-log",
+      "kind": "agent-skill",
+      "name": "Eval Log",
+      "author": "SerroAI",
+      "tagline": "Log every eval run where the whole team can compare it with the baseline.",
+      "description": "Each eval or benchmark run becomes a row in a shared Serro dataset: suite, model, prompt version, commit, score, passes, cost and latency. Your agent compares a new run with the baseline and recent runs before you merge a prompt or model change, and answers \"which model is best\" with a query.",
+      "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-eval-log",
+      "sha": "0000000000000000000000000000000000000000",
+      "tags": [
+        "datasets",
+        "development",
+        "reporting"
+      ],
+      "targets": [
+        "claude-code",
+        "codex",
+        "copilot"
+      ],
+      "requiresIntegrations": [
+        "serro"
+      ],
+      "featured": false,
+      "beta": true,
+      "addedAt": "2026-11-10",
+      "triggersOn": "After an eval or benchmark run; \"did this prompt change regress\", \"compare with the baseline\", \"which model scores best\".",
+      "requires": [
+        "Serro MCP connected, with datasets enabled for your workspace (beta)",
+        "Its board is created once in Ask Serro from the schema in the skill (declared datasets, beta)",
+        "An eval suite or benchmark your agent can run or read results from"
+      ],
+      "writes": "One row per eval run in the eval log, and the baseline flag when you ask, after you approve.",
+      "outputs": [
+        "The run compared with the baseline: better, same within noise, or worse",
+        "Newly failing cases when the output names them",
+        "Model and prompt comparisons across the team's runs"
+      ]
     }
   ]
 }
