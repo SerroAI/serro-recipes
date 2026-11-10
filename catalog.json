@@ -35,7 +35,7 @@
       "tagline": "Is this PR safe to merge given everything the program already knows?",
       "description": "Judge a PR against what the program already knows: open risks, committed customer requirements, recorded decisions and open action items. Not a style review — a \"does this land safely in this program\" review.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-pr-readiness",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "review",
         "development"
@@ -90,7 +90,7 @@
       "tagline": "Program-level go/no-go, backed by commitments rather than a green build.",
       "description": "Program-level go/no-go. Surfaces committed-but-unshipped customer requirements, unresolved risks, release-gating action items and contradicted decisions, with an explicit list of what could not be checked.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-release-readiness",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "automation",
         "planning"
@@ -144,7 +144,7 @@
       "tagline": "Does the implementation still match the design — and the decisions?",
       "description": "Review a PR against the design source of truth — a design.md, a PRD, or a Serro-linked design doc — plus the program's recorded design decisions. Reports contradictions, decision reversals, silent extensions and stale design.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-design-pr-review",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "review",
         "development"
@@ -203,7 +203,7 @@
       "tagline": "Give any agent the program context, with no integration at all.",
       "description": "Compile the program's live context into a committed SERRO-CONTEXT.md, so any agent — Claude Code, Codex, Cursor, Codepress — inherits it as ordinary repository context. Ships the serro-context skill alongside it.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-context-pack",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "automation",
         "planning"
@@ -235,7 +235,7 @@
       "tagline": "Today's meetings and movement, in one thing you read before standup.",
       "description": "Pull today's meetings, Jira issues updated in the last 24 hours and anything the program is flagging from Serro, and synthesise them into a short, skimmable brief. When Serro is unreachable it reports the error and returns nothing rather than filling the gap — an empty brief beats an invented one.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-daily-brief",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "automation",
         "reporting"
@@ -268,7 +268,7 @@
       "tagline": "A week of program activity, condensed to what someone would actually read.",
       "description": "Pull a week of program activity from Serro — meetings, Jira movement, Slack discussion and open risks — and synthesise a skimmable digest. The weekly, program-scoped counterpart to Daily Brief.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-digest-builder",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "automation",
         "reporting"
@@ -303,7 +303,7 @@
       "tagline": "Where engineering effort actually went, split four ways.",
       "description": "Classify a time window of engineering effort into new capability, keep-the-lights-on, internal platform and quality investment, broken down per engineer and per workstream. Reads Jira activity, repo activity, code history and the work-mix data from Serro.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-effort-analysis",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "planning",
         "reporting"
@@ -338,7 +338,7 @@
       "tagline": "Turn an incident into a runbook, root cause included.",
       "description": "Gather the meeting, Slack and Jira context around an incident from Serro, run a five-whys root-cause analysis, and draft a structured SOP. Publishing to Confluence sits behind an explicit approval gate.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-sop-writer",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "automation",
         "incident"
@@ -371,7 +371,7 @@
       "tagline": "Find where the code stopped honouring what the team decided.",
       "description": "Audit the checked-out repo against the program's locked decisions, committed customer requirements and open risks, then report divergence grouped by decision — each finding carrying file:line evidence, the Serro item it contradicts, and a severity.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-decision-drift-detector",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "review",
         "context"
@@ -404,7 +404,7 @@
       "tagline": "Characterise, fix, document — one approval covers all three writes.",
       "description": "The full incident loop in one run: characterise the issue from Serro context, propose a code fix as a patch and PR body, and draft a five-whys SOP. Everything up to that point is read-only. A single approval gate then files the issue in Serro, publishes the SOP to Confluence, and opens a draft PR with the fix.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-incident-response",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "automation",
         "incident"
@@ -442,7 +442,7 @@
       "tagline": "Your agent reads the program before it writes the code.",
       "description": "Teaches an agent to load the program context that governs this repo — objective, open risks, committed customer requirements, recorded decisions — before planning or implementing, and how to behave when a request contradicts it.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-context",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "context",
         "development"
@@ -480,7 +480,7 @@
       "tagline": "A status update built from what actually landed.",
       "description": "Draft a status update from what actually happened — merged PRs, decisions, action items, meetings — with evidence attached to every claim. Shipped means merged, blocked names the decision needed.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-standup",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "planning",
         "reporting"
@@ -517,7 +517,7 @@
       "tagline": "Ten minutes out, and you know exactly what to ask.",
       "description": "Prepare for a program meeting from the delta since the last one: what changed, which promises are still open, what needs a decision today, and questions specific enough to be uncomfortable.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-meeting-prep",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "planning",
         "meetings"
@@ -555,7 +555,7 @@
       "tagline": "Stop re-litigating what the team already settled.",
       "description": "Before re-opening a settled question, find out whether it was already decided — and report the decision, its date, its rationale and what it constrains. Four explicit outcomes, including \"discussed but never decided\".",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-decision-check",
-      "sha": "5fb3a319be1790153177289c4f669394054c604a",
+      "sha": "8351789a6877044d9c32375c627da2130628a737",
       "tags": [
         "context",
         "planning"
