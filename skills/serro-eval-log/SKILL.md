@@ -91,7 +91,14 @@ Only when the user says so. Find the current one first
 (`SELECT run_id FROM ds WHERE suite = '<suite>' AND baseline`), then upsert both in
 one batch: `{run_id: <new>, baseline: true}` and `{run_id: <old>, baseline:
 false}`. Keep one baseline per suite: Serro's checks only see the rows in a
-batch, so this is on you.
+batch, so this is on you:
+
+- Confirm only when the preview shows the old run's `baseline` changing **from
+  true**. If it isn't in the changes, someone moved the baseline after you
+  looked: don't confirm; query again and start over.
+- After confirming, query `SELECT run_id FROM ds WHERE suite = '<suite>' AND
+  baseline`. If more than one comes back, tell the user which runs and ask
+  which should keep it.
 
 ## Answer questions from the log
 
