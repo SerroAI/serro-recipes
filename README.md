@@ -278,6 +278,21 @@ a recipe:
 - **The Serro MCP** (`list_workflows`, `get_workflow`) reads `catalog.json` live
   from `main`, so a merged change reaches agents without a deploy.
 
+### Staging first, then main
+
+Recipe changes go to the **`staging`** branch first. Serro's staging MCP reads
+`catalog.json` from `staging` (kgqa's `RECIPES_CATALOG_REF`); production, the
+Archon CLI and `npx skills add` read `main`.
+
+1. Open your PR against `staging`, merge it, then pin `staging` to the merge
+   commit: `bun scripts/pin-sha.ts <sha> && bun scripts/build-registry.ts && bun scripts/lint-registry.ts --network`,
+   in a second PR against `staging`.
+2. Test on staging (gallery, public guides, MCP `get_workflow`). Sync btnextjs
+   staging to that commit with `scripts/sync-recipes.ts --ref <sha>`.
+3. Promote with a PR from `staging` to `main` (it needs an approving review).
+   The pins already point at commits that exist on `main` once it merges, as
+   long as the promotion is a merge commit, not a squash.
+
 ### catalog.json vs workflows.json
 
 `catalog.json` is canonical and holds every kind. **`workflows.json` is generated
