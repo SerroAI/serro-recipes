@@ -5,6 +5,10 @@ description: Keep a release's readiness as a shared ledger in Serro - one row pe
 
 # Serro Release Ledger (beta)
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Release readiness gets re-derived from scratch every time someone asks: each
 agent re-reads every PR, re-runs the same checks, and the answer lives in one
 chat. This skill keeps one row per PR in a **ledger in Serro**: its verdict, what

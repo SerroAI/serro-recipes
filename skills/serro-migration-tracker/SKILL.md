@@ -5,6 +5,10 @@ description: Run a long migration, upgrade or sweep as a shared board in a Serro
 
 # Serro Migration Tracker (beta)
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Long migrations die in the middle: thirty files left, nobody sure which are
 claimed, two people fixing the same one, and the PM asking for status in Slack.
 This skill keeps the migration on a **board in Serro**, a dataset the whole team

@@ -5,6 +5,10 @@ description: Review a pull request against its design source of truth (a design.
 
 # Serro Design PR Review
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Check a change against what the design says and what the team actually decided.
 Style, naming, tests and performance are out of scope unless the design
 explicitly speaks to them.

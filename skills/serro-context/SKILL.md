@@ -5,6 +5,10 @@ description: Load the program context (objective, open risks, committed customer
 
 # Serro Program Context
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 This repository is governed by a **program** — a shared source of truth Serro
 maintains across meetings, tickets, code and chat. The program knows things the
 code does not: what was promised to which customer, which risks are open, and

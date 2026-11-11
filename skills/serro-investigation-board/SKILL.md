@@ -5,6 +5,10 @@ description: Hunt a hard bug as a team of agents sharing one investigation board
 
 # Serro Investigation Board (beta)
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Hard bugs get debugged in parallel by people who don't talk enough: one agent
 retries the cache theory another ruled out an hour ago, and when the fix lands
 nobody can say why the other five theories were wrong. This skill puts the hunt

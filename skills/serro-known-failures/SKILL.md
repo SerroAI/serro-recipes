@@ -5,6 +5,10 @@ description: Check a shared ledger of known test and build failures in Serro bef
 
 # Serro Known Failures (beta)
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Every team has failures that everyone's agent rediscovers: the test that fails
 on a clean checkout, the flake that passes on retry, the job that breaks when a
 service is down. Each agent spends twenty minutes on it and the answer dies with

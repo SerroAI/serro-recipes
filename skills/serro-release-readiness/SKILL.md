@@ -5,6 +5,10 @@ description: Decide go, go_with_risk or no_go for shipping a Serro program by we
 
 # Serro Release Readiness
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Program-level go/no-go: answer "are we ready to ship" from the commitments and
 risks the program holds, not from a green CI badge.
 

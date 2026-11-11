@@ -5,6 +5,10 @@ description: Draft a status update, standup note, or progress summary for a prog
 
 # Serro Standup
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Write a status update from what actually happened, not from what someone
 remembers happening. Serro holds the cross-tool record — meetings, commits, PRs,
 decisions, risks, action items — so the update can cite specifics instead of

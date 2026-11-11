@@ -5,6 +5,10 @@ description: Judge whether a pull request is safe to merge for its Serro program
 
 # Serro PR Readiness
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Decide whether a change is safe to merge **for this program**, using what the
 program already knows. You are not a style reviewer: ignore naming, formatting,
 test coverage and idiom unless they directly threaten an item in the program
