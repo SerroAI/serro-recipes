@@ -35,7 +35,7 @@
       "tagline": "Is this PR safe to merge given everything the program already knows?",
       "description": "Judge a PR against what the program already knows: open risks, committed customer requirements, recorded decisions and open action items. Not a style review — a \"does this land safely in this program\" review.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-pr-readiness",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "review",
         "development"
@@ -90,7 +90,7 @@
       "tagline": "Program-level go/no-go, backed by commitments rather than a green build.",
       "description": "Program-level go/no-go. Surfaces committed-but-unshipped customer requirements, unresolved risks, release-gating action items and contradicted decisions, with an explicit list of what could not be checked.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-release-readiness",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "automation",
         "planning"
@@ -144,7 +144,7 @@
       "tagline": "Does the implementation still match the design — and the decisions?",
       "description": "Review a PR against the design source of truth — a design.md, a PRD, or a Serro-linked design doc — plus the program's recorded design decisions. Reports contradictions, decision reversals, silent extensions and stale design.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-design-pr-review",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "review",
         "development"
@@ -203,7 +203,7 @@
       "tagline": "Give any agent the program context, with no integration at all.",
       "description": "Compile the program's live context into a committed SERRO-CONTEXT.md, so any agent — Claude Code, Codex, Cursor, Codepress — inherits it as ordinary repository context. Ships the serro-context skill alongside it.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-context-pack",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "automation",
         "planning"
@@ -235,7 +235,7 @@
       "tagline": "Today's meetings and movement, in one thing you read before standup.",
       "description": "Pull today's meetings, Jira issues updated in the last 24 hours and anything the program is flagging from Serro, and synthesise them into a short, skimmable brief. When Serro is unreachable it reports the error and returns nothing rather than filling the gap — an empty brief beats an invented one.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-daily-brief",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "automation",
         "reporting"
@@ -268,7 +268,7 @@
       "tagline": "A week of program activity, condensed to what someone would actually read.",
       "description": "Pull a week of program activity from Serro — meetings, Jira movement, Slack discussion and open risks — and synthesise a skimmable digest. The weekly, program-scoped counterpart to Daily Brief.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-digest-builder",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "automation",
         "reporting"
@@ -303,7 +303,7 @@
       "tagline": "Where engineering effort actually went, split four ways.",
       "description": "Classify a time window of engineering effort into new capability, keep-the-lights-on, internal platform and quality investment, broken down per engineer and per workstream. Reads Jira activity, repo activity, code history and the work-mix data from Serro.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-effort-analysis",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "planning",
         "reporting"
@@ -338,7 +338,7 @@
       "tagline": "Turn an incident into a runbook, root cause included.",
       "description": "Gather the meeting, Slack and Jira context around an incident from Serro, run a five-whys root-cause analysis, and draft a structured SOP. Publishing to Confluence sits behind an explicit approval gate.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-sop-writer",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "automation",
         "incident"
@@ -371,7 +371,7 @@
       "tagline": "Find where the code stopped honouring what the team decided.",
       "description": "Audit the checked-out repo against the program's locked decisions, committed customer requirements and open risks, then report divergence grouped by decision — each finding carrying file:line evidence, the Serro item it contradicts, and a severity.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-decision-drift-detector",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "review",
         "context"
@@ -404,7 +404,7 @@
       "tagline": "Characterise, fix, document — one approval covers all three writes.",
       "description": "The full incident loop in one run: characterise the issue from Serro context, propose a code fix as a patch and PR body, and draft a five-whys SOP. Everything up to that point is read-only. A single approval gate then files the issue in Serro, publishes the SOP to Confluence, and opens a draft PR with the fix.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/recipes/serro-incident-response",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "automation",
         "incident"
@@ -442,7 +442,7 @@
       "tagline": "Your agent reads the program before it writes the code.",
       "description": "Teaches an agent to load the program context that governs this repo — objective, open risks, committed customer requirements, recorded decisions — before planning or implementing, and how to behave when a request contradicts it.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-context",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "context",
         "development"
@@ -480,7 +480,7 @@
       "tagline": "A status update built from what actually landed.",
       "description": "Draft a status update from what actually happened — merged PRs, decisions, action items, meetings — with evidence attached to every claim. Shipped means merged, blocked names the decision needed.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-standup",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "planning",
         "reporting"
@@ -517,7 +517,7 @@
       "tagline": "Ten minutes out, and you know exactly what to ask.",
       "description": "Prepare for a program meeting from the delta since the last one: what changed, which promises are still open, what needs a decision today, and questions specific enough to be uncomfortable.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-meeting-prep",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "planning",
         "meetings"
@@ -555,7 +555,7 @@
       "tagline": "Stop re-litigating what the team already settled.",
       "description": "Before re-opening a settled question, find out whether it was already decided — and report the decision, its date, its rationale and what it constrains. Four explicit outcomes, including \"discussed but never decided\".",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-decision-check",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "context",
         "planning"
@@ -592,7 +592,7 @@
       "tagline": "Fill a Serro dataset from evidence your agent can reach, with a source for every value.",
       "description": "Reads a dataset's declared columns, key and checks, gathers rows from the repo, tickets, docs and meetings, and lands them in batches you approve. Curated columns first; it sends only values it found, so unknown values stay empty instead of guessed.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-dataset-fill",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "datasets",
         "automation"
@@ -629,7 +629,7 @@
       "tagline": "Split a big sweep across subagents that coordinate in Serro, then fill a dataset together.",
       "description": "Your agent leads a small crew: it splits the work into areas, subagents each claim one in the program's Agent Exchange workspace and write their findings there, and the lead merges them by key and lands one approved batch per worker, so the dataset's History shows who found what.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-agent-crew",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "multi-agent",
         "datasets",
@@ -666,7 +666,7 @@
       "tagline": "Run a long migration as a shared board every teammate's agent works from.",
       "description": "One row per unit of a migration, upgrade or sweep. Any agent picks the next open unit, claims it, does the work and records branch, PR and blockers; the claim is the lock, so two agents never take the same unit. The widget is the team's burn-down.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-migration-tracker",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "multi-agent",
         "datasets",
@@ -703,7 +703,7 @@
       "tagline": "Never re-debug a flake someone already understood.",
       "description": "Before debugging a failing test, build or CI job, your agent checks a shared ledger of known failures in Serro: it reuses the recorded cause and workaround, counts the occurrence, catches regressions of fixed failures, and records new ones once understood.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-known-failures",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "datasets",
         "development"
@@ -739,7 +739,7 @@
       "tagline": "Hunt a hard bug with several agents without anyone retrying a dead end.",
       "description": "Every hypothesis about a bug is a row on a shared board in Serro, with who is testing it, how, and the evidence that ruled it out or confirmed it. Agents and teammates read the board before testing anything, and the root cause lands with its proof.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-investigation-board",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "multi-agent",
         "datasets",
@@ -777,7 +777,7 @@
       "tagline": "Make \"is the release ready\" a query, not a re-check of every PR.",
       "description": "One row per PR in a release, with its verdict, blockers, evidence and the commit it was assessed at. Any agent records a PR's readiness; asking whether the release is ready re-assesses only missing or changed PRs and answers GO or NO-GO from the ledger.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-release-ledger",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "datasets",
         "review"
@@ -814,7 +814,7 @@
       "tagline": "Check customer promises before changing behavior, and record what each PR did to them.",
       "description": "Before a behavior change, your agent checks the program's customer requirements in Serro for asks it delivers, changes or puts at risk, and stops for you to decide. After the PR, it records the link in a commitment ledger product can read; a risk is recorded only with the person who accepted it.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-commitment-guard",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "datasets",
         "planning",
@@ -851,7 +851,7 @@
       "tagline": "Log every eval run where the whole team can compare it with the baseline.",
       "description": "Each eval or benchmark run becomes a row in a shared Serro dataset: suite, model, prompt version, commit, score, passes, cost and latency. Your agent compares a new run with the baseline and recent runs before you merge a prompt or model change, and answers \"which model is best\" with a query.",
       "sourceUrl": "https://github.com/SerroAI/serro-recipes/tree/main/skills/serro-eval-log",
-      "sha": "237f51d863e960bc9aa76924ed29cf1b02fd05ba",
+      "sha": "1cc59afb19891c9692f885d4574c96df3a79fabb",
       "tags": [
         "datasets",
         "development",
