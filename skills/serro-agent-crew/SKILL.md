@@ -5,6 +5,10 @@ description: Split a large sweep (repos, services, ticket projects, documents) a
 
 # Serro Agent Crew (beta)
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Some datasets are too big for one agent in one pass: every service's owner and
 on-call, every open commitment across five ticket projects, every dependency in
 a monorepo. This skill makes you the **lead** of a small crew. You split the work

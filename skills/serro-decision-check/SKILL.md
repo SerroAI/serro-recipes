@@ -5,6 +5,10 @@ description: Check whether a question has already been decided for a program bef
 
 # Serro Decision Check
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Re-litigating a settled decision is one of the most expensive things a team does,
 and it happens because the decision is invisible: it lives in a meeting three
 weeks ago that half the room missed. Serro records decisions with rationale and

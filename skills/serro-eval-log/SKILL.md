@@ -5,6 +5,10 @@ description: Record every eval or benchmark run (suite, model, prompt version, c
 
 # Serro Eval Log (beta)
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Eval results usually live in one person's terminal scrollback, so nobody can say
 whether today's prompt is better than last week's or which model run set the
 baseline. This skill writes each run as a row in an **eval log in Serro**, a

@@ -5,6 +5,10 @@ description: Prepare for an upcoming program meeting using Serro — what change
 
 # Serro Meeting Prep
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Turn "I have a meeting in ten minutes" into a short, specific agenda grounded in
 what actually happened since the last one.
 

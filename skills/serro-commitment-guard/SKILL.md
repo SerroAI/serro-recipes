@@ -5,6 +5,10 @@ description: Before a coding agent changes behavior, check the program's custome
 
 # Serro Commitment Guard (beta)
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 Customer promises live with product: in Serro's **customer requirements**
 (each ask with its customers and its state, requested → committed → shipped).
 Code changes live with engineering. The two meet only when something breaks. This

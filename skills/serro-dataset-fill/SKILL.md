@@ -5,6 +5,10 @@ description: Fill or update rows of a Serro program dataset from evidence your a
 
 # Serro Dataset Fill (beta)
 
+Tool names below assume the Serro MCP server is registered as `serro`. If yours
+has another name (on Serro's staging, `serro-staging`), use that prefix instead:
+`mcp__serro-staging__list_programs` for `mcp__serro__list_programs`, and so on.
+
 A Serro dataset is a versioned table behind a program widget: a service
 inventory, a commitment tracker, an ownership map. Some of its columns are filled
 by Serro's refresh. Others are **curated**: only people and agents fill them, and
